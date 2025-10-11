@@ -31,9 +31,9 @@ Multi-method authentication system supporting email, SMS, Web3 wallets, and soci
 
 ## Tech Stack
 
-- **Runtime**: Node.js 18+
+- **Runtime**: Alternate Futures Functions
 - **Framework**: Hono (edge-compatible)
-- **Database**: D1 (Cloudflare) or Turso (SQLite)
+- **Database**: Turso (SQLite) or local SQLite
 - **Email**: Resend or SendGrid
 - **SMS**: Twilio
 - **Web3**: @noble/secp256k1, viem
@@ -153,6 +153,19 @@ alternatefutures-auth/
 ├── tsconfig.json               # TypeScript configuration
 └── package.json
 ```
+
+## Deployment
+
+This service is designed to be deployed as an **Alternate Futures Function**. Once the AF Functions platform is ready, you can deploy this authentication service directly through the platform.
+
+### Deployment Steps (Coming Soon)
+
+1. Build the project: `npm run build`
+2. Deploy via AF Functions Dashboard
+3. Configure environment variables in AF Platform
+4. Set up custom domain (optional)
+
+The service will automatically scale and run on the AF Functions infrastructure.
 
 ## Development
 

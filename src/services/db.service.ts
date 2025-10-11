@@ -1,6 +1,6 @@
 /**
  * Database service for interacting with SQLite
- * Compatible with Turso, D1, and local SQLite
+ * Compatible with Turso and local SQLite for AF Functions
  */
 
 import { Database } from 'bun:sqlite'; // Works with Bun, can swap for better-sqlite3 for Node

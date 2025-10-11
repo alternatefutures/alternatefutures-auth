@@ -6,9 +6,9 @@ A standalone multi-method authentication service for the Alternate Futures platf
 
 ## Tech Stack
 
-- **Runtime**: Node.js 18+
-- **Framework**: Hono (edge-compatible, works on Cloudflare Workers, Deno, Bun, Node)
-- **Database**: SQLite (D1/Turso compatible)
+- **Runtime**: Alternate Futures Functions
+- **Framework**: Hono (edge-compatible)
+- **Database**: SQLite (Turso compatible)
 - **Language**: TypeScript 5.4
 - **JWT**: jsonwebtoken
 - **Crypto**: @noble/hashes, @noble/secp256k1
@@ -149,11 +149,11 @@ See `.env.example` for full list.
 
 ## Deployment
 
-This service is designed to run on:
-- **Cloudflare Workers** (recommended for edge deployment)
-- **Deno Deploy**
-- **Node.js** (any VPS, Fly.io, Railway, etc.)
-- **Bun**
+This service is designed to be deployed as an **Alternate Futures Function**. Once the AF Functions platform is ready, this authentication service will be one of the first production deployments on the platform.
+
+### Deployment Target
+- **Primary**: Alternate Futures Functions platform
+- **Development**: Node.js for local testing
 
 ## Security Considerations
 
