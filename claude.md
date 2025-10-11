@@ -167,26 +167,35 @@ This service is designed to be deployed as an **Alternate Futures Function**. On
 
 ## Implementation Status
 
-### ✅ Completed
+### ✅ Completed (MVP Backend)
 - Project structure setup
-- Database schema designed
+- Database schema designed and created
 - TypeScript configuration
-- Basic Hono server
-
-### 🚧 In Progress
-- JWT token service
-
-### 📋 Todo
+- Hono server with routing
+- JWT token service (access + refresh tokens)
 - Email magic link authentication
-- SMS OTP authentication
 - Web3 wallet authentication (SIWE)
-- OAuth social providers
-- Account linking
+- OAuth social providers (Google, GitHub, etc.)
+- Account linking and management
 - Rate limiting middleware
+- CORS middleware
 - Email service integration (Resend)
+- Database service layer (SQLite/Turso)
+- Authentication middleware
+- Input validation (Zod schemas)
+- Comprehensive test suite (Vitest)
+- API documentation
+- Deployment documentation
+
+### 📋 Future Enhancements (Post-MVP)
+- SMS OTP authentication
 - SMS service integration (Twilio)
-- Database service layer
-- Tests
+- Multi-factor authentication (MFA/2FA)
+- WebAuthn/Passkeys support
+- Magic link rate limiting improvements
+- Session management UI
+- Account recovery flows
+- Email templates customization
 
 ## Related Projects
 

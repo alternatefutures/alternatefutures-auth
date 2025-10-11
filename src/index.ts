@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
-import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { corsMiddleware, devCorsMiddleware } from './middleware/cors';
 import authRoutes from './routes/auth';
 import accountRoutes from './routes/account';
 
@@ -8,13 +8,10 @@ const app = new Hono();
 
 // Middleware
 app.use('*', logger());
-app.use(
-  '*',
-  cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
-    credentials: true,
-  })
-);
+
+// Use appropriate CORS middleware based on environment
+const isDevelopment = process.env.NODE_ENV === 'development';
+app.use('*', isDevelopment ? devCorsMiddleware : corsMiddleware);
 
 // Health check
 app.get('/health', (c) => {
