@@ -1,0 +1,50 @@
+{
+  "name": "@alternatefutures/auth-service",
+  "version": "0.1.0",
+  "description": "Alternate Futures Authentication Service - Multi-method authentication system",
+  "private": false,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write ."
+  },
+  "keywords": [
+    "authentication",
+    "auth",
+    "jwt",
+    "oauth",
+    "web3",
+    "wallet",
+    "magic-link",
+    "passwordless"
+  ],
+  "author": "Alternate Futures",
+  "license": "MIT",
+  "dependencies": {
+    "hono": "^4.0.0",
+    "zod": "^3.23.8",
+    "jsonwebtoken": "^9.0.2",
+    "@noble/hashes": "^1.4.0",
+    "@noble/secp256k1": "^2.1.0",
+    "nanoid": "^5.0.7"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.12.4",
+    "tsx": "^4.7.1",
+    "typescript": "^5.4.3",
+    "vitest": "^1.4.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.4.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
