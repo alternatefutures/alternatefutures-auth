@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import authRoutes from './routes/auth';
 
 const app = new Hono();
 
@@ -61,8 +62,8 @@ app.get('/', (c) => {
   });
 });
 
-// TODO: Mount auth routes
-// app.route('/auth', authRoutes);
+// Mount auth routes
+app.route('/auth', authRoutes);
 
 // TODO: Mount account routes
 // app.route('/account', accountRoutes);
