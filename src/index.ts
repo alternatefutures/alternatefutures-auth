@@ -1,18 +1,17 @@
 import { Hono } from 'hono';
-import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { corsMiddleware, devCorsMiddleware } from './middleware/cors';
+import authRoutes from './routes/auth';
+import accountRoutes from './routes/account';
 
 const app = new Hono();
 
 // Middleware
 app.use('*', logger());
-app.use(
-  '*',
-  cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
-    credentials: true,
-  })
-);
+
+// Use appropriate CORS middleware based on environment
+const isDevelopment = process.env.NODE_ENV === 'development';
+app.use('*', isDevelopment ? devCorsMiddleware : corsMiddleware);
 
 // Health check
 app.get('/health', (c) => {
@@ -61,11 +60,11 @@ app.get('/', (c) => {
   });
 });
 
-// TODO: Mount auth routes
-// app.route('/auth', authRoutes);
+// Mount auth routes
+app.route('/auth', authRoutes);
 
-// TODO: Mount account routes
-// app.route('/account', accountRoutes);
+// Mount account routes
+app.route('/account', accountRoutes);
 
 // 404 handler
 app.notFound((c) => {
@@ -88,7 +87,20 @@ const port = parseInt(process.env.PORT || '3000');
 
 console.log(`🚀 Alternate Futures Auth Service starting on port ${port}`);
 
+// For edge runtimes (Cloudflare Workers, Bun, Deno)
 export default {
   port,
   fetch: app.fetch,
 };
+
+// For Node.js development
+if (process.env.NODE_ENV !== 'production' || !process.env.CLOUDFLARE_ACCOUNT_ID) {
+  const { serve } = await import('@hono/node-server');
+
+  serve({
+    fetch: app.fetch,
+    port,
+  });
+
+  console.log(`✅ Server listening on http://localhost:${port}`);
+}

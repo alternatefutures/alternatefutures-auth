@@ -6,9 +6,9 @@ A standalone multi-method authentication service for the Alternate Futures platf
 
 ## Tech Stack
 
-- **Runtime**: Node.js 18+
-- **Framework**: Hono (edge-compatible, works on Cloudflare Workers, Deno, Bun, Node)
-- **Database**: SQLite (D1/Turso compatible)
+- **Runtime**: Alternate Futures Functions
+- **Framework**: Hono (edge-compatible)
+- **Database**: SQLite (Turso compatible)
 - **Language**: TypeScript 5.4
 - **JWT**: jsonwebtoken
 - **Crypto**: @noble/hashes, @noble/secp256k1
@@ -149,11 +149,11 @@ See `.env.example` for full list.
 
 ## Deployment
 
-This service is designed to run on:
-- **Cloudflare Workers** (recommended for edge deployment)
-- **Deno Deploy**
-- **Node.js** (any VPS, Fly.io, Railway, etc.)
-- **Bun**
+This service is designed to be deployed as an **Alternate Futures Function**. Once the AF Functions platform is ready, this authentication service will be one of the first production deployments on the platform.
+
+### Deployment Target
+- **Primary**: Alternate Futures Functions platform
+- **Development**: Node.js for local testing
 
 ## Security Considerations
 
@@ -167,26 +167,35 @@ This service is designed to run on:
 
 ## Implementation Status
 
-### ✅ Completed
+### ✅ Completed (MVP Backend)
 - Project structure setup
-- Database schema designed
+- Database schema designed and created
 - TypeScript configuration
-- Basic Hono server
-
-### 🚧 In Progress
-- JWT token service
-
-### 📋 Todo
+- Hono server with routing
+- JWT token service (access + refresh tokens)
 - Email magic link authentication
-- SMS OTP authentication
 - Web3 wallet authentication (SIWE)
-- OAuth social providers
-- Account linking
+- OAuth social providers (Google, GitHub, etc.)
+- Account linking and management
 - Rate limiting middleware
+- CORS middleware
 - Email service integration (Resend)
+- Database service layer (SQLite/Turso)
+- Authentication middleware
+- Input validation (Zod schemas)
+- Comprehensive test suite (Vitest)
+- API documentation
+- Deployment documentation
+
+### 📋 Future Enhancements (Post-MVP)
+- SMS OTP authentication
 - SMS service integration (Twilio)
-- Database service layer
-- Tests
+- Multi-factor authentication (MFA/2FA)
+- WebAuthn/Passkeys support
+- Magic link rate limiting improvements
+- Session management UI
+- Account recovery flows
+- Email templates customization
 
 ## Related Projects
 

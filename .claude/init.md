@@ -425,6 +425,6 @@ See `DEPLOY_ARWEAVE.md` for deployment to Arweave using Turbo CLI.
 
 ## References
 
-- **Task**: ALT-9 - Build Alternate Futures App
-- **Repo**: github.com/alternatefutures/altfutures-app
-- **Stack**: SvelteKit, TypeScript, Cloudflare/Arweave
+- **Task**: ALT-32 - Build Custom Authentication System
+- **Repo**: github.com/alternatefutures/alternatefutures-auth
+- **Stack**: Hono, TypeScript, Alternate Futures Functions
