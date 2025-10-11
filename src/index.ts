@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import authRoutes from './routes/auth';
+import accountRoutes from './routes/account';
 
 const app = new Hono();
 
@@ -65,8 +66,8 @@ app.get('/', (c) => {
 // Mount auth routes
 app.route('/auth', authRoutes);
 
-// TODO: Mount account routes
-// app.route('/account', accountRoutes);
+// Mount account routes
+app.route('/account', accountRoutes);
 
 // 404 handler
 app.notFound((c) => {
