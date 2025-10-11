@@ -3,7 +3,7 @@
  * Initializes the SQLite database with required tables
  */
 
-import { Database } from 'bun:sqlite';
+import Database from 'better-sqlite3';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';

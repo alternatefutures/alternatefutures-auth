@@ -87,7 +87,20 @@ const port = parseInt(process.env.PORT || '3000');
 
 console.log(`🚀 Alternate Futures Auth Service starting on port ${port}`);
 
+// For edge runtimes (Cloudflare Workers, Bun, Deno)
 export default {
   port,
   fetch: app.fetch,
 };
+
+// For Node.js development
+if (process.env.NODE_ENV !== 'production' || !process.env.CLOUDFLARE_ACCOUNT_ID) {
+  const { serve } = await import('@hono/node-server');
+
+  serve({
+    fetch: app.fetch,
+    port,
+  });
+
+  console.log(`✅ Server listening on http://localhost:${port}`);
+}

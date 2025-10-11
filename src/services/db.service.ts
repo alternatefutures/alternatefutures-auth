@@ -3,7 +3,7 @@
  * Compatible with Turso and local SQLite for AF Functions
  */
 
-import { Database } from 'bun:sqlite'; // Works with Bun, can swap for better-sqlite3 for Node
+import Database from 'better-sqlite3';
 
 export interface User {
   id: string;
