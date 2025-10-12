@@ -130,7 +130,11 @@ export class EmailService {
 }
 
 // Create singleton instance
-export const emailService = new EmailService(
-  process.env.RESEND_API_KEY || '',
-  process.env.FROM_EMAIL || 'auth@alternatefutures.ai'
-);
+const apiKey = process.env.RESEND_API_KEY || '';
+const fromEmail = process.env.FROM_EMAIL || 'auth@alternatefutures.ai';
+
+console.log('📧 Email Service Config:');
+console.log('  API Key:', apiKey ? `${apiKey.substring(0, 8)}...` : 'NOT SET');
+console.log('  From Email:', fromEmail);
+
+export const emailService = new EmailService(apiKey, fromEmail);
