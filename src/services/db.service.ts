@@ -74,10 +74,12 @@ export interface SIWEChallenge {
 }
 
 export class DatabaseService {
-  private db: Database;
+  public db: Database; // Change to public for test access
 
   constructor(databasePath: string = ':memory:') {
     this.db = new Database(databasePath);
+    // Enable foreign key constraints (disabled by default in SQLite)
+    this.db.pragma('foreign_keys = ON');
     this.initializeSchema();
   }
 
@@ -211,7 +213,7 @@ export class DatabaseService {
     const fields = Object.keys(updates)
       .map((key) => `${key} = ?`)
       .join(', ');
-    const values = [...Object.values(updates), id];
+    const values = Object.values(updates);
 
     const stmt = this.db.prepare(`UPDATE users SET ${fields}, updated_at = ? WHERE id = ?`);
     stmt.run(...values, Date.now(), id);
@@ -311,6 +313,11 @@ export class DatabaseService {
     return stmt.get(refreshToken) as Session | null;
   }
 
+  async getSessionById(id: string): Promise<Session | null> {
+    const stmt = this.db.prepare('SELECT * FROM sessions WHERE id = ?');
+    return stmt.get(id) as Session | null;
+  }
+
   async revokeSession(id: string): Promise<void> {
     const stmt = this.db.prepare(`
       UPDATE sessions
@@ -362,6 +369,25 @@ export class DatabaseService {
   async getUserAuthMethods(userId: string): Promise<AuthMethod[]> {
     const stmt = this.db.prepare('SELECT * FROM auth_methods WHERE user_id = ?');
     return stmt.all(userId) as AuthMethod[];
+  }
+
+  /**
+   * Close the database connection
+   */
+  close(): void {
+    if (this.db) {
+      this.db.close();
+    }
+  }
+
+  /**
+   * Reset the database (close and recreate with fresh schema)
+   */
+  reset(databasePath: string = ':memory:'): void {
+    this.close();
+    this.db = new Database(databasePath);
+    this.db.pragma('foreign_keys = ON');
+    this.initializeSchema();
   }
 }
 

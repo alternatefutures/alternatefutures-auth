@@ -7,30 +7,32 @@ import { dbService } from '../src/services/db.service';
 
 // Setup before each test
 beforeEach(() => {
+  // Set test environment
+  process.env.NODE_ENV = 'test';
+
   // Use in-memory database for tests
   process.env.DATABASE_URL = ':memory:';
   process.env.JWT_SECRET = 'test-secret-key';
   process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-key';
   process.env.JWT_EXPIRES_IN = '15m';
   process.env.JWT_REFRESH_EXPIRES_IN = '7d';
+
+  // Reset database to fresh state for each test
+  // This ensures complete isolation between tests
+  dbService.reset(':memory:');
 });
 
-// Cleanup after each test
+// Cleanup after each test (optional, but good practice)
 afterEach(() => {
-  // Clear database
-  if (dbService.db) {
-    dbService.db.exec('DELETE FROM users');
-    dbService.db.exec('DELETE FROM auth_methods');
-    dbService.db.exec('DELETE FROM sessions');
-    dbService.db.exec('DELETE FROM verification_codes');
-    dbService.db.exec('DELETE FROM siwe_challenges');
-  }
+  // No need to manually clean up - beforeEach will reset for next test
+  // But we can close the connection to free resources
+  // Note: Don't close here as the singleton might be used again
 });
 
 // Mock fetch for external API calls
-global.fetch = async (url: string | URL | Request, options?: RequestInit) => {
+global.fetch = (async (url: string | URL | Request, options?: RequestInit) => {
   return new Response(JSON.stringify({ success: true }), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   });
-} as any;
+}) as typeof fetch;

@@ -34,6 +34,7 @@
     "@noble/secp256k1": "^2.1.0",
     "dotenv": "^17.2.3",
     "hono": "^4.0.0",
+    "httpsms": "^0.0.4",
     "jsonwebtoken": "^9.0.2",
     "nanoid": "^5.0.7",
     "zod": "^3.23.8"
@@ -47,7 +48,8 @@
     "prettier": "^3.4.2",
     "tsx": "^4.7.1",
     "typescript": "^5.4.3",
-    "vitest": "^1.4.0"
+    "vitest": "^1.4.0",
+    "wrangler": "^4.42.2"
   },
   "engines": {
     "node": ">=18"

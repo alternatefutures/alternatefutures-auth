@@ -58,6 +58,18 @@ export class EmailService {
    * Send verification code email
    */
   async sendVerificationCode(email: string, code: string): Promise<void> {
+    // In development without API key, just log the code
+    if (!this.apiKey || process.env.NODE_ENV === 'development') {
+      console.log('\n🔐 ========================================');
+      console.log('📧 VERIFICATION CODE (Development Mode)');
+      console.log('========================================');
+      console.log(`Email: ${email}`);
+      console.log(`Code: ${code}`);
+      console.log('Expires: 10 minutes');
+      console.log('========================================\n');
+      return;
+    }
+
     const subject = 'Your Alternate Futures Verification Code';
     const text = `Your verification code is: ${code}\n\nThis code will expire in 10 minutes.\n\nIf you didn't request this code, please ignore this email.`;
     const html = `

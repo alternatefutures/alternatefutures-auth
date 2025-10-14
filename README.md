@@ -14,10 +14,9 @@ Multi-method authentication system supporting email, SMS, Web3 wallets, and soci
   - Support for Ethereum and Solana
 
 - 🌐 **Social OAuth Providers**
-  - Google, Apple, Twitter/X
-  - Discord, GitHub, LinkedIn
-  - Spotify, Instagram, Telegram
-  - TikTok, Farcaster
+  - Google, Twitter/X, GitHub
+  - Discord (more coming soon)
+  - ~~Apple~~ (temporarily disabled)
 
 - 🔗 **Account Linking**
   - Link multiple auth methods to one account
@@ -35,7 +34,7 @@ Multi-method authentication system supporting email, SMS, Web3 wallets, and soci
 - **Framework**: Hono (edge-compatible)
 - **Database**: Turso (SQLite) or local SQLite
 - **Email**: Resend or SendGrid
-- **SMS**: Twilio
+- **SMS**: httpSMS (Open Source SMS Gateway)
 - **Web3**: @noble/secp256k1, viem
 
 ## Quick Start
@@ -70,10 +69,9 @@ JWT_REFRESH_SECRET=
 # Email (Resend)
 RESEND_API_KEY=
 
-# SMS (Twilio)
-TWILIO_ACCOUNT_SID=
-TWILIO_AUTH_TOKEN=
-TWILIO_PHONE_NUMBER=
+# SMS (httpSMS - Open Source)
+HTTPSMS_API_KEY=
+HTTPSMS_PHONE_NUMBER=
 
 # OAuth Providers
 GOOGLE_CLIENT_ID=
@@ -84,6 +82,36 @@ GITHUB_CLIENT_SECRET=
 
 # Add more as needed
 ```
+
+### Setting Up httpSMS
+
+httpSMS is an open-source SMS gateway that uses your Android phone to send/receive SMS messages:
+
+1. **Install the Android App**
+   - Download from [GitHub Releases](https://github.com/NdoleStudio/httpsms/releases)
+   - Install on any Android phone
+
+2. **Get API Key**
+   - Visit [httpsms.com/settings](https://httpsms.com/settings)
+   - Sign up and generate an API key
+   - Add your phone number in the dashboard
+
+3. **Configure Environment**
+   ```bash
+   HTTPSMS_API_KEY=your_api_key_here
+   HTTPSMS_PHONE_NUMBER=+1234567890  # Your Android phone number
+   ```
+
+4. **Self-Hosting (Optional)**
+   - httpSMS can be self-hosted for full control
+   - See [httpSMS Documentation](https://docs.httpsms.com) for self-hosting guide
+
+**Why httpSMS?**
+- ✅ Open source (MIT license)
+- ✅ End-to-end encryption (AES-256)
+- ✅ Self-hostable or cloud-hosted
+- ✅ No monthly fees (just use your existing phone plan)
+- ✅ Full control over your SMS infrastructure
 
 ## API Endpoints
 
@@ -130,7 +158,7 @@ alternatefutures-auth/
 │   ├── services/
 │   │   ├── jwt.service.ts      # JWT generation/validation
 │   │   ├── email.service.ts    # Email sending (Resend)
-│   │   ├── sms.service.ts      # SMS sending (Twilio)
+│   │   ├── sms.service.ts      # SMS sending (httpSMS)
 │   │   ├── db.service.ts       # Database operations
 │   │   └── crypto.service.ts   # Encryption/hashing
 │   ├── middleware/

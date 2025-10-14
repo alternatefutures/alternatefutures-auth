@@ -1,0 +1,64 @@
+---
+version: "2.0"
+
+services:
+  auth-api:
+    image: node:20-alpine
+    expose:
+      - port: 3001
+        as: 80
+        to:
+          - global: true
+        accept:
+          - auth.alternatefutures.ai
+    env:
+      - NODE_ENV=production
+      - PORT=3001
+      - JWT_SECRET=CHANGE_THIS_IN_PRODUCTION
+      - JWT_REFRESH_SECRET=CHANGE_THIS_TOO
+      - JWT_EXPIRES_IN=15m
+      - JWT_REFRESH_EXPIRES_IN=7d
+      - DOMAIN=alternatefutures.ai
+      - APP_URL=https://app.alternatefutures.ai
+      - FRONTEND_URL=https://app.alternatefutures.ai
+      - CORS_ORIGIN=https://app.alternatefutures.ai
+      - FROM_EMAIL=auth@alternatefutures.ai
+      - RESEND_API_KEY=OPTIONAL_IF_USING_DECENTRALIZED_MESSAGING
+    command:
+      - sh
+      - -c
+    args:
+      - >-
+        cd /app &&
+        npm install &&
+        npm run build &&
+        node dist/index.js
+
+profiles:
+  compute:
+    auth-api:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 512Mi
+        storage:
+          size: 1Gi
+
+  placement:
+    akash:
+      attributes:
+        host: akash
+      signedBy:
+        anyOf:
+          - "akash1365yvmc4s7awdyj3n2sav7xfx76adc6dnmlx63"
+      pricing:
+        auth-api:
+          denom: uakt
+          amount: 100
+
+deployment:
+  auth-api:
+    akash:
+      profile: auth-api
+      count: 1
