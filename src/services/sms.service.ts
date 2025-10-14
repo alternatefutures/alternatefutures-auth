@@ -34,7 +34,7 @@ export class SMSService {
     }
 
     try {
-      const response = await this.client.messages.send({
+      const response = await this.client.messages.postSend({
         from: this.phoneNumber,
         to: to,
         content: body,

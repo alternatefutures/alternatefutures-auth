@@ -3,47 +3,76 @@ version: "2.0"
 
 services:
   auth-api:
-    image: node:20-alpine
+    # Replace with your Docker Hub username or use GitHub Container Registry
+    # Example: ghcr.io/alternatefutures/alternatefutures-auth:latest
+    image: alternatefutures/alternatefutures-auth:latest
     expose:
-      - port: 3001
+      - port: 3000
         as: 80
         to:
           - global: true
         accept:
           - auth.alternatefutures.ai
     env:
+      # Core Configuration
       - NODE_ENV=production
-      - PORT=3001
+      - PORT=3000
+      - DATABASE_URL=/app/data/auth.db
+
+      # JWT Secrets (CHANGE THESE!)
       - JWT_SECRET=CHANGE_THIS_IN_PRODUCTION
       - JWT_REFRESH_SECRET=CHANGE_THIS_TOO
       - JWT_EXPIRES_IN=15m
       - JWT_REFRESH_EXPIRES_IN=7d
+
+      # URLs
       - DOMAIN=alternatefutures.ai
-      - APP_URL=https://app.alternatefutures.ai
+      - APP_URL=https://auth.alternatefutures.ai
       - FRONTEND_URL=https://app.alternatefutures.ai
       - CORS_ORIGIN=https://app.alternatefutures.ai
-      - FROM_EMAIL=auth@alternatefutures.ai
-      - RESEND_API_KEY=OPTIONAL_IF_USING_DECENTRALIZED_MESSAGING
-    command:
-      - sh
-      - -c
-    args:
-      - >-
-        cd /app &&
-        npm install &&
-        npm run build &&
-        node dist/index.js
+
+      # Email Service (Resend)
+      - RESEND_API_KEY=YOUR_RESEND_KEY_HERE
+
+      # SMS Service (httpSMS)
+      - HTTPSMS_API_KEY=YOUR_HTTPSMS_KEY_HERE
+      - HTTPSMS_PHONE_NUMBER=YOUR_PHONE_NUMBER
+
+      # OAuth - Google
+      - GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
+      - GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_SECRET
+      - GOOGLE_REDIRECT_URI=https://auth.alternatefutures.ai/auth/oauth/callback/google
+
+      # OAuth - GitHub
+      - GITHUB_CLIENT_ID=YOUR_GITHUB_CLIENT_ID
+      - GITHUB_CLIENT_SECRET=YOUR_GITHUB_SECRET
+      - GITHUB_REDIRECT_URI=https://auth.alternatefutures.ai/auth/oauth/callback/github
+
+      # OAuth - Twitter/X
+      - TWITTER_CLIENT_ID=YOUR_TWITTER_CLIENT_ID
+      - TWITTER_CLIENT_SECRET=YOUR_TWITTER_SECRET
+      - TWITTER_REDIRECT_URI=https://auth.alternatefutures.ai/auth/oauth/callback/twitter
+
+      # OAuth - Discord
+      - DISCORD_CLIENT_ID=YOUR_DISCORD_CLIENT_ID
+      - DISCORD_CLIENT_SECRET=YOUR_DISCORD_SECRET
+      - DISCORD_REDIRECT_URI=https://auth.alternatefutures.ai/auth/oauth/callback/discord
 
 profiles:
   compute:
     auth-api:
       resources:
         cpu:
-          units: 0.5
+          units: 1.0
         memory:
-          size: 512Mi
-        storage:
           size: 1Gi
+        storage:
+          - size: 1Gi
+          - name: data
+            size: 2Gi
+            attributes:
+              persistent: true
+              class: beta3
 
   placement:
     akash:
