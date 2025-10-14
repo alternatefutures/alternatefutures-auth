@@ -3,9 +3,8 @@ version: "2.0"
 
 services:
   auth-api:
-    # Replace with your Docker Hub username or use GitHub Container Registry
-    # Example: ghcr.io/alternatefutures/alternatefutures-auth:latest
-    image: alternatefutures/alternatefutures-auth:latest
+    # Use Node base image and build from source
+    image: node:20-alpine
     expose:
       - port: 3000
         as: 80

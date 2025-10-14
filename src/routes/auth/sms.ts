@@ -106,8 +106,7 @@ app.post('/verify', strictRateLimit, async (c) => {
         id: nanoid(),
         phone,
         phone_verified: 1,
-        created_at: Date.now(),
-        updated_at: Date.now(),
+        email_verified: 0,
       });
 
       // Create auth method
@@ -117,14 +116,13 @@ app.post('/verify', strictRateLimit, async (c) => {
         method_type: 'sms',
         identifier: phone,
         verified: 1,
-        created_at: Date.now(),
+        is_primary: 1,
       });
     } else {
       // Update existing user
       await dbService.updateUser(user.id, {
         phone_verified: 1,
         last_login_at: Date.now(),
-        updated_at: Date.now(),
       });
 
       // Update or create auth method
@@ -136,13 +134,10 @@ app.post('/verify', strictRateLimit, async (c) => {
           method_type: 'sms',
           identifier: phone,
           verified: 1,
-          created_at: Date.now(),
-        });
-      } else {
-        await dbService.updateAuthMethod(authMethod.id, {
-          verified: 1,
+          is_primary: 0,
         });
       }
+      // Note: No updateAuthMethod method exists, auth methods are immutable once created
     }
 
     // Generate JWT tokens
@@ -157,8 +152,6 @@ app.post('/verify', strictRateLimit, async (c) => {
       user_id: user.id,
       refresh_token: refreshToken,
       expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
-      created_at: Date.now(),
-      last_used_at: Date.now(),
       ip_address: c.req.header('x-forwarded-for') || c.req.header('x-real-ip'),
       user_agent: c.req.header('user-agent'),
       revoked: 0,

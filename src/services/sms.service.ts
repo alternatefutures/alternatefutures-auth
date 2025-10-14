@@ -38,6 +38,7 @@ export class SMSService {
         from: this.phoneNumber,
         to: to,
         content: body,
+        encrypted: false, // Set to true if you want end-to-end encryption
       });
 
       console.log('SMS sent successfully:', response.id);

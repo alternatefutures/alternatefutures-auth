@@ -146,7 +146,7 @@ export class OAuthService {
       throw new Error(`Token exchange failed: ${error}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as Record<string, any>;
     return data.access_token;
   }
 
@@ -171,7 +171,7 @@ export class OAuthService {
       throw new Error(`Failed to get user info: ${error}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as Record<string, any>;
 
     // Normalize user info based on provider
     return this.normalizeUserInfo(providerName, data);

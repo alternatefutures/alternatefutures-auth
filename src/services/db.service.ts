@@ -3,7 +3,7 @@
  * Compatible with Turso and local SQLite for AF Functions
  */
 
-import Database from 'better-sqlite3';
+import Database, { type Database as DatabaseType } from 'better-sqlite3';
 
 export interface User {
   id: string;
@@ -74,7 +74,7 @@ export interface SIWEChallenge {
 }
 
 export class DatabaseService {
-  public db: Database; // Change to public for test access
+  public db: DatabaseType; // Change to public for test access
 
   constructor(databasePath: string = ':memory:') {
     this.db = new Database(databasePath);

@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { type SignOptions } from 'jsonwebtoken';
 import { nanoid } from 'nanoid';
 
 export interface TokenPayload {
@@ -36,10 +36,10 @@ export class JWTService {
     };
 
     return jwt.sign(payload, this.config.accessTokenSecret, {
-      expiresIn: this.config.accessTokenExpiry,
+      expiresIn: this.config.accessTokenExpiry as string,
       issuer: 'alternatefutures-auth',
       audience: 'alternatefutures-app',
-    });
+    } as SignOptions);
   }
 
   /**
@@ -53,10 +53,10 @@ export class JWTService {
     };
 
     return jwt.sign(payload, this.config.refreshTokenSecret, {
-      expiresIn: this.config.refreshTokenExpiry,
+      expiresIn: this.config.refreshTokenExpiry as string,
       issuer: 'alternatefutures-auth',
       audience: 'alternatefutures-app',
-    });
+    } as SignOptions);
   }
 
   /**
@@ -78,10 +78,10 @@ export class JWTService {
       } as TokenPayload,
       this.config.accessTokenSecret,
       {
-        expiresIn: this.config.accessTokenExpiry,
+        expiresIn: this.config.accessTokenExpiry as string,
         issuer: 'alternatefutures-auth',
         audience: 'alternatefutures-app',
-      }
+      } as SignOptions
     );
 
     const refreshToken = jwt.sign(
@@ -92,10 +92,10 @@ export class JWTService {
       } as TokenPayload,
       this.config.refreshTokenSecret,
       {
-        expiresIn: this.config.refreshTokenExpiry,
+        expiresIn: this.config.refreshTokenExpiry as string,
         issuer: 'alternatefutures-auth',
         audience: 'alternatefutures-app',
-      }
+      } as SignOptions
     );
 
     return {
