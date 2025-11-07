@@ -190,3 +190,30 @@ CREATE TABLE IF NOT EXISTS rate_limits (
 
 CREATE UNIQUE INDEX idx_rate_limits_identifier_action ON rate_limits(identifier, action);
 CREATE INDEX idx_rate_limits_window_start ON rate_limits(window_start);
+
+-- Personal Access Tokens (API keys for machine-to-machine authentication)
+CREATE TABLE IF NOT EXISTS personal_access_tokens (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+
+  -- Token details
+  name TEXT NOT NULL,
+  token TEXT NOT NULL UNIQUE,
+
+  -- Expiration
+  expires_at INTEGER,
+
+  -- Usage tracking
+  last_used_at INTEGER,
+
+  -- Metadata
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_personal_access_tokens_user_id ON personal_access_tokens(user_id);
+CREATE INDEX idx_personal_access_tokens_token ON personal_access_tokens(token);
+CREATE INDEX idx_personal_access_tokens_expires_at ON personal_access_tokens(expires_at);
+CREATE INDEX idx_personal_access_tokens_user_created ON personal_access_tokens(user_id, created_at DESC);
