@@ -3,9 +3,7 @@
  * Implements EIP-4361: Sign-In with Ethereum
  */
 
-import { secp256k1 } from '@noble/curves/secp256k1';
-import { keccak_256 } from '@noble/hashes/sha3';
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
+import { verifyMessage } from 'ethers';
 
 export interface SIWEMessage {
   domain: string;
@@ -82,38 +80,11 @@ export class SIWEService {
    */
   verifySignature(message: string, signature: string, address: string): boolean {
     try {
-      // Ethereum uses "\x19Ethereum Signed Message:\n" prefix
-      const prefix = '\x19Ethereum Signed Message:\n';
-      const prefixedMessage = prefix + message.length + message;
-
-      // Hash the prefixed message
-      const messageHash = keccak_256(new TextEncoder().encode(prefixedMessage));
-
-      // Parse signature (remove 0x prefix if present)
-      const sig = signature.startsWith('0x') ? signature.slice(2) : signature;
-
-      // Extract r, s, v from signature
-      const r = sig.slice(0, 64);
-      const s = sig.slice(64, 128);
-      const v = parseInt(sig.slice(128, 130), 16);
-
-      // Recover public key from signature
-      const recovery = v - 27;
-      if (recovery !== 0 && recovery !== 1) {
-        return false;
-      }
-
-      const publicKey = secp256k1.Signature.fromCompact(r + s)
-        .addRecoveryBit(recovery)
-        .recoverPublicKey(messageHash)
-        .toRawBytes(false); // uncompressed
-
-      // Derive Ethereum address from public key
-      const publicKeyHash = keccak_256(publicKey.slice(1)); // Remove 0x04 prefix
-      const derivedAddress = '0x' + bytesToHex(publicKeyHash.slice(-20));
+      // Use ethers to recover the signer address from the signature
+      const recoveredAddress = verifyMessage(message, signature);
 
       // Compare addresses (case-insensitive)
-      return derivedAddress.toLowerCase() === address.toLowerCase();
+      return recoveredAddress.toLowerCase() === address.toLowerCase();
     } catch (error) {
       console.error('Signature verification error:', error);
       return false;
