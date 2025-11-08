@@ -3,7 +3,7 @@
  * Compatible with Turso and local SQLite for AF Functions
  */
 
-import Database from 'better-sqlite3';
+import Database, { type Database as DatabaseType } from 'better-sqlite3';
 
 export interface User {
   id: string;
@@ -73,11 +73,24 @@ export interface SIWEChallenge {
   ip_address?: string;
 }
 
+export interface PersonalAccessToken {
+  id: string;
+  user_id: string;
+  name: string;
+  token: string;
+  expires_at?: number;
+  last_used_at?: number;
+  created_at: number;
+  updated_at: number;
+}
+
 export class DatabaseService {
-  private db: Database;
+  public db: DatabaseType; // Change to public for test access
 
   constructor(databasePath: string = ':memory:') {
     this.db = new Database(databasePath);
+    // Enable foreign key constraints (disabled by default in SQLite)
+    this.db.pragma('foreign_keys = ON');
     this.initializeSchema();
   }
 
@@ -157,9 +170,29 @@ export class DatabaseService {
         created_at INTEGER NOT NULL,
         ip_address TEXT
       );
+
+      CREATE TABLE IF NOT EXISTS personal_access_tokens (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        token TEXT NOT NULL UNIQUE,
+        expires_at INTEGER,
+        last_used_at INTEGER,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
     `;
 
     this.db.exec(schema);
+
+    // Create indexes for personal_access_tokens
+    this.db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_personal_access_tokens_user_id ON personal_access_tokens(user_id);
+      CREATE INDEX IF NOT EXISTS idx_personal_access_tokens_token ON personal_access_tokens(token);
+      CREATE INDEX IF NOT EXISTS idx_personal_access_tokens_expires_at ON personal_access_tokens(expires_at);
+      CREATE INDEX IF NOT EXISTS idx_personal_access_tokens_user_created ON personal_access_tokens(user_id, created_at DESC);
+    `);
   }
 
   // User methods
@@ -211,7 +244,7 @@ export class DatabaseService {
     const fields = Object.keys(updates)
       .map((key) => `${key} = ?`)
       .join(', ');
-    const values = [...Object.values(updates), id];
+    const values = Object.values(updates);
 
     const stmt = this.db.prepare(`UPDATE users SET ${fields}, updated_at = ? WHERE id = ?`);
     stmt.run(...values, Date.now(), id);
@@ -311,6 +344,11 @@ export class DatabaseService {
     return stmt.get(refreshToken) as Session | null;
   }
 
+  async getSessionById(id: string): Promise<Session | null> {
+    const stmt = this.db.prepare('SELECT * FROM sessions WHERE id = ?');
+    return stmt.get(id) as Session | null;
+  }
+
   async revokeSession(id: string): Promise<void> {
     const stmt = this.db.prepare(`
       UPDATE sessions
@@ -362,6 +400,102 @@ export class DatabaseService {
   async getUserAuthMethods(userId: string): Promise<AuthMethod[]> {
     const stmt = this.db.prepare('SELECT * FROM auth_methods WHERE user_id = ?');
     return stmt.all(userId) as AuthMethod[];
+  }
+
+  // Personal Access Token methods
+  async createPersonalAccessToken(pat: Omit<PersonalAccessToken, 'created_at' | 'updated_at'>): Promise<PersonalAccessToken> {
+    const now = Date.now();
+    const newPat: PersonalAccessToken = {
+      ...pat,
+      created_at: now,
+      updated_at: now,
+    };
+
+    const stmt = this.db.prepare(`
+      INSERT INTO personal_access_tokens (id, user_id, name, token, expires_at, last_used_at, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      newPat.id,
+      newPat.user_id,
+      newPat.name,
+      newPat.token,
+      newPat.expires_at,
+      newPat.last_used_at,
+      newPat.created_at,
+      newPat.updated_at
+    );
+
+    return newPat;
+  }
+
+  async getPersonalAccessTokenById(id: string): Promise<PersonalAccessToken | null> {
+    const stmt = this.db.prepare('SELECT * FROM personal_access_tokens WHERE id = ?');
+    return stmt.get(id) as PersonalAccessToken | null;
+  }
+
+  async getPersonalAccessTokenByToken(token: string): Promise<PersonalAccessToken | null> {
+    const stmt = this.db.prepare('SELECT * FROM personal_access_tokens WHERE token = ?');
+    return stmt.get(token) as PersonalAccessToken | null;
+  }
+
+  async listPersonalAccessTokensByUserId(userId: string): Promise<PersonalAccessToken[]> {
+    const stmt = this.db.prepare(`
+      SELECT * FROM personal_access_tokens
+      WHERE user_id = ?
+      ORDER BY created_at DESC
+    `);
+    return stmt.all(userId) as PersonalAccessToken[];
+  }
+
+  async countPersonalAccessTokensByUserId(userId: string): Promise<number> {
+    const stmt = this.db.prepare('SELECT COUNT(*) as count FROM personal_access_tokens WHERE user_id = ?');
+    const result = stmt.get(userId) as { count: number };
+    return result.count;
+  }
+
+  async updatePersonalAccessTokenLastUsed(id: string): Promise<void> {
+    const stmt = this.db.prepare(`
+      UPDATE personal_access_tokens
+      SET last_used_at = ?
+      WHERE id = ?
+    `);
+    stmt.run(Date.now(), id);
+  }
+
+  async deletePersonalAccessToken(id: string): Promise<void> {
+    const stmt = this.db.prepare('DELETE FROM personal_access_tokens WHERE id = ?');
+    stmt.run(id);
+  }
+
+  async deleteExpiredPersonalAccessTokens(): Promise<number> {
+    const now = Date.now();
+    const stmt = this.db.prepare(`
+      DELETE FROM personal_access_tokens
+      WHERE expires_at IS NOT NULL AND expires_at <= ?
+    `);
+    const result = stmt.run(now);
+    return result.changes;
+  }
+
+  /**
+   * Close the database connection
+   */
+  close(): void {
+    if (this.db) {
+      this.db.close();
+    }
+  }
+
+  /**
+   * Reset the database (close and recreate with fresh schema)
+   */
+  reset(databasePath: string = ':memory:'): void {
+    this.close();
+    this.db = new Database(databasePath);
+    this.db.pragma('foreign_keys = ON');
+    this.initializeSchema();
   }
 }
 

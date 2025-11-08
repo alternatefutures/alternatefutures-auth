@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { type SignOptions } from 'jsonwebtoken';
 import { nanoid } from 'nanoid';
 
 export interface TokenPayload {
@@ -36,10 +36,10 @@ export class JWTService {
     };
 
     return jwt.sign(payload, this.config.accessTokenSecret, {
-      expiresIn: this.config.accessTokenExpiry,
+      expiresIn: this.config.accessTokenExpiry as string,
       issuer: 'alternatefutures-auth',
       audience: 'alternatefutures-app',
-    });
+    } as SignOptions);
   }
 
   /**
@@ -53,10 +53,10 @@ export class JWTService {
     };
 
     return jwt.sign(payload, this.config.refreshTokenSecret, {
-      expiresIn: this.config.refreshTokenExpiry,
+      expiresIn: this.config.refreshTokenExpiry as string,
       issuer: 'alternatefutures-auth',
       audience: 'alternatefutures-app',
-    });
+    } as SignOptions);
   }
 
   /**
@@ -78,10 +78,10 @@ export class JWTService {
       } as TokenPayload,
       this.config.accessTokenSecret,
       {
-        expiresIn: this.config.accessTokenExpiry,
+        expiresIn: this.config.accessTokenExpiry as string,
         issuer: 'alternatefutures-auth',
         audience: 'alternatefutures-app',
-      }
+      } as SignOptions
     );
 
     const refreshToken = jwt.sign(
@@ -92,10 +92,10 @@ export class JWTService {
       } as TokenPayload,
       this.config.refreshTokenSecret,
       {
-        expiresIn: this.config.refreshTokenExpiry,
+        expiresIn: this.config.refreshTokenExpiry as string,
         issuer: 'alternatefutures-auth',
         audience: 'alternatefutures-app',
-      }
+      } as SignOptions
     );
 
     return {
@@ -110,14 +110,22 @@ export class JWTService {
    */
   verifyAccessToken(token: string): TokenPayload {
     try {
+      // First decode without verification to check token type
+      const unverified = jwt.decode(token) as TokenPayload | null;
+
+      if (!unverified) {
+        throw new Error('Invalid access token');
+      }
+
+      if (unverified.type !== 'access') {
+        throw new Error('Invalid token type');
+      }
+
+      // Now verify with correct secret
       const decoded = jwt.verify(token, this.config.accessTokenSecret, {
         issuer: 'alternatefutures-auth',
         audience: 'alternatefutures-app',
       }) as TokenPayload;
-
-      if (decoded.type !== 'access') {
-        throw new Error('Invalid token type');
-      }
 
       return decoded;
     } catch (error) {
@@ -136,14 +144,22 @@ export class JWTService {
    */
   verifyRefreshToken(token: string): TokenPayload {
     try {
+      // First decode without verification to check token type
+      const unverified = jwt.decode(token) as TokenPayload | null;
+
+      if (!unverified) {
+        throw new Error('Invalid refresh token');
+      }
+
+      if (unverified.type !== 'refresh') {
+        throw new Error('Invalid token type');
+      }
+
+      // Now verify with correct secret
       const decoded = jwt.verify(token, this.config.refreshTokenSecret, {
         issuer: 'alternatefutures-auth',
         audience: 'alternatefutures-app',
       }) as TokenPayload;
-
-      if (decoded.type !== 'refresh') {
-        throw new Error('Invalid token type');
-      }
 
       return decoded;
     } catch (error) {

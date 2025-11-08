@@ -1,8 +1,10 @@
+import 'dotenv/config';
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { corsMiddleware, devCorsMiddleware } from './middleware/cors';
 import authRoutes from './routes/auth';
 import accountRoutes from './routes/account';
+import tokensRoutes from './routes/tokens';
 
 const app = new Hono();
 
@@ -56,6 +58,13 @@ app.get('/', (c) => {
         profile: 'GET /account/profile',
         methods: 'GET /account/methods',
       },
+      tokens: {
+        create: 'POST /tokens',
+        list: 'GET /tokens',
+        delete: 'DELETE /tokens/:id',
+        validate: 'POST /tokens/validate',
+        limits: 'GET /tokens/limits',
+      },
     },
   });
 });
@@ -65,6 +74,9 @@ app.route('/auth', authRoutes);
 
 // Mount account routes
 app.route('/account', accountRoutes);
+
+// Mount tokens routes
+app.route('/tokens', tokensRoutes);
 
 // 404 handler
 app.notFound((c) => {

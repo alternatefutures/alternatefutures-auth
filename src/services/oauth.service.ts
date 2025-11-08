@@ -57,9 +57,37 @@ export class OAuthService {
       });
     }
 
-    // Twitter/X OAuth (TODO)
-    // Discord OAuth (TODO)
-    // Add more providers as needed
+    // Twitter/X OAuth
+    if (process.env.TWITTER_CLIENT_ID) {
+      this.providers.set('twitter', {
+        name: 'Twitter',
+        authUrl: 'https://twitter.com/i/oauth2/authorize',
+        tokenUrl: 'https://api.twitter.com/2/oauth2/token',
+        userInfoUrl: 'https://api.twitter.com/2/users/me',
+        clientId: process.env.TWITTER_CLIENT_ID,
+        clientSecret: process.env.TWITTER_CLIENT_SECRET || '',
+        redirectUri: process.env.TWITTER_REDIRECT_URI || 'http://localhost:3000/auth/oauth/callback/twitter',
+        scope: 'tweet.read users.read',
+      });
+    }
+
+    // Discord OAuth
+    if (process.env.DISCORD_CLIENT_ID) {
+      this.providers.set('discord', {
+        name: 'Discord',
+        authUrl: 'https://discord.com/api/oauth2/authorize',
+        tokenUrl: 'https://discord.com/api/oauth2/token',
+        userInfoUrl: 'https://discord.com/api/users/@me',
+        clientId: process.env.DISCORD_CLIENT_ID,
+        clientSecret: process.env.DISCORD_CLIENT_SECRET || '',
+        redirectUri: process.env.DISCORD_REDIRECT_URI || 'http://localhost:3000/auth/oauth/callback/discord',
+        scope: 'identify email',
+      });
+    }
+
+    // NOTE: Apple Sign In is currently disabled due to signup issues
+    // It requires a different OAuth flow using JWT-based authentication
+    // See .env.example for commented out Apple credentials
   }
 
   /**
@@ -118,7 +146,7 @@ export class OAuthService {
       throw new Error(`Token exchange failed: ${error}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as Record<string, any>;
     return data.access_token;
   }
 
@@ -143,7 +171,7 @@ export class OAuthService {
       throw new Error(`Failed to get user info: ${error}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as Record<string, any>;
 
     // Normalize user info based on provider
     return this.normalizeUserInfo(providerName, data);
@@ -168,6 +196,24 @@ export class OAuthService {
           email: data.email,
           name: data.name || data.login,
           picture: data.avatar_url,
+        };
+
+      case 'twitter':
+        return {
+          id: data.data?.id || data.id,
+          email: data.data?.email || data.email,
+          name: data.data?.name || data.name,
+          picture: data.data?.profile_image_url || data.profile_image_url,
+        };
+
+      case 'discord':
+        return {
+          id: data.id,
+          email: data.email,
+          name: data.username,
+          picture: data.avatar
+            ? `https://cdn.discordapp.com/avatars/${data.id}/${data.avatar}.png`
+            : undefined,
         };
 
       default:

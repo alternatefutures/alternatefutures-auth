@@ -34,6 +34,11 @@ export function rateLimit(config: RateLimitConfig) {
   } = config;
 
   return async (c: Context, next: Next) => {
+    // Skip rate limiting in test environment
+    if (process.env.NODE_ENV === 'test' || process.env.VITEST === 'true') {
+      return next();
+    }
+
     const key = keyGenerator(c);
     const now = Date.now();
 

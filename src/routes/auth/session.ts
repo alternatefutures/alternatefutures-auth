@@ -20,21 +20,21 @@ app.post('/refresh', standardRateLimit, async (c) => {
     // Verify refresh token
     const payload = jwtService.verifyRefreshToken(refreshToken);
 
-    // Check if session exists and is valid
-    const session = await dbService.getSessionByRefreshToken(refreshToken);
+    // Check if session exists (including revoked sessions)
+    const session = await dbService.getSessionById(payload.sessionId);
 
     if (!session) {
       return c.json({ error: 'Invalid refresh token' }, 401);
     }
 
-    // Check if session is expired
-    if (Date.now() > session.expires_at) {
-      return c.json({ error: 'Session expired' }, 401);
-    }
-
     // Check if session is revoked
     if (session.revoked) {
       return c.json({ error: 'Session has been revoked' }, 401);
+    }
+
+    // Check if session is expired
+    if (Date.now() > session.expires_at) {
+      return c.json({ error: 'Session expired' }, 401);
     }
 
     // Get user
