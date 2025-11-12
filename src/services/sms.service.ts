@@ -91,4 +91,14 @@ export const smsService = new SMSService(
 
 console.log('📱 SMS Service Config (httpSMS):');
 console.log(`  API Key: ${process.env.HTTPSMS_API_KEY ? process.env.HTTPSMS_API_KEY.substring(0, 10) + '...' : 'Not configured'}`);
-console.log(`  From Number: ${process.env.HTTPSMS_PHONE_NUMBER || 'Not configured'}`);
+console.log(`  From Number: ${maskPhoneNumber(process.env.HTTPSMS_PHONE_NUMBER)}`);
+
+/**
+ * Mask all but last 2 digits of a phone number for safe logging.
+ * If undefined or empty, return 'Not configured'.
+ */
+function maskPhoneNumber(number?: string): string {
+  if (!number || number.length < 2) return 'Not configured';
+  const visible = number.slice(-2);
+  return `***${visible}`;
+}
