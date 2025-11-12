@@ -34,7 +34,7 @@
     "@noble/hashes": "^1.4.0",
     "@noble/secp256k1": "^2.1.0",
     "dotenv": "^17.2.3",
-    "hono": "^4.0.0",
+    "hono": "^4.10.5",
     "httpsms": "^0.0.4",
     "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.2",
