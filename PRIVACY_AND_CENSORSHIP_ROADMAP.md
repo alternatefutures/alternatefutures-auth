@@ -574,7 +574,111 @@ You choose. Self-host or use our instance.
 
 ---
 
-## 7. Metrics for Success
+## 7. Comparison with Competitors
+
+### Feature Comparison
+
+| Feature | Auth0 | Supabase | Clerk | **ThirdWeb** | **Privy.io** | **Alternate Futures** |
+|---------|-------|----------|-------|--------------|--------------|----------------------|
+| **Open Source** | ❌ Proprietary | ✅ Yes | ❌ Proprietary | ❌ Proprietary | ❌ Proprietary | ✅ **MIT License** |
+| **Self-Hostable** | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No | ✅ **Yes** |
+| **No Analytics/Tracking** | ❌ Collects | ❌ Collects | ❌ Collects | ❌ Collects* | ⚠️ Unknown | ✅ **Zero tracking** |
+| **Decentralized Deployment** | ❌ No | ❌ No | ❌ No | ❌ Hosted only | ❌ Hosted only | ✅ **Akash Network** |
+| **Tor Support** | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | 🔄 **Roadmap** |
+| **Anonymous Auth** | ❌ Requires email/phone | ❌ Requires email | ❌ Requires email | ✅ Wallet-only option | ✅ Wallet-only option | ✅ **Wallet auth** |
+| **IP-Free Option** | ❌ Always collects | ❌ Always collects | ❌ Always collects | ⚠️ Unknown | ⚠️ Unknown | 🔄 **Roadmap** |
+| **Web3 Wallet Auth** | ⚠️ Limited | ⚠️ Third-party | ⚠️ Limited | ✅ **Primary focus** | ✅ **Primary focus** | ✅ **SIWE + more** |
+| **Embedded Wallets** | ❌ No | ❌ No | ❌ No | ✅ Yes | ✅ **Yes** (MPC) | 🔄 Roadmap |
+| **Email/SMS Auth** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ **Yes** |
+| **OAuth Providers** | ✅ Many | ✅ Several | ✅ Many | ✅ Social login | ✅ Social login | ✅ **10+ providers** |
+| **MPC Key Management** | ❌ No | ❌ No | ❌ No | ⚠️ Unknown | ✅ **Yes** (key sharding) | 🔄 Roadmap |
+| **Data Encryption at Rest** | ✅ Yes | ✅ Yes | ✅ Yes | ⚠️ Unknown | ✅ **TEE-based** | ✅ **AES-256-GCM** |
+| **GDPR Compliant** | ✅ Yes | ✅ Yes | ✅ Yes | ⚠️ Unknown | ⚠️ Unknown | ✅ **Yes** |
+| **Pricing** | 💰 Enterprise | 💰 Free tier + paid | 💰 Paid | 💰 Pay-as-you-go | 💰 Enterprise | 🆓 **Free (self-host)** |
+
+\* ThirdWeb includes Google Tag Manager and PostHog analytics on their site
+
+### Key Differentiators
+
+#### **ThirdWeb**
+- **Focus**: Web3-first with 500+ wallet connections
+- **Strength**: Comprehensive wallet integration, multi-platform SDKs
+- **Weakness**: Proprietary, analytics tracking, no self-hosting
+- **Best For**: dApps needing extensive wallet support
+
+#### **Privy.io**
+- **Focus**: Embedded wallets with MPC security
+- **Strength**: Advanced key management (distributed key sharding, TEEs)
+- **Weakness**: Proprietary, hosted-only, enterprise pricing
+- **Best For**: Apps wanting secure embedded wallets for users
+- **Privacy**: Claims to never access user keys via MPC, but closed-source
+
+#### **Alternate Futures Auth**
+- **Focus**: Privacy-first, censorship-resistant authentication
+- **Strength**: Open source, self-hostable, decentralized, zero tracking
+- **Weakness**: Newer project, embedded wallets not yet implemented
+- **Best For**: Privacy-conscious apps, decentralized projects, self-hosters
+- **Unique**: Only fully open-source option with Akash deployment
+
+### When to Choose Each
+
+**Choose ThirdWeb if:**
+- Building a Web3 app needing extensive wallet integrations
+- Need multi-platform SDKs (Unity, Unreal, React Native)
+- Willing to use hosted service
+- Less concerned about open source
+
+**Choose Privy.io if:**
+- Need embedded wallets with MPC security
+- Want users without crypto wallets to onboard easily
+- Enterprise budget for authentication
+- Trust closed-source key management
+
+**Choose Alternate Futures Auth if:**
+- Privacy is non-negotiable
+- Want to self-host and control your data
+- Need to audit the code (open source)
+- Building censorship-resistant applications
+- Want decentralized infrastructure (Akash)
+- Tight budget (free to self-host)
+- Prefer community-driven development
+
+### Market Position
+
+```
+           Decentralized ↑
+                         |
+                         |  ● Alternate Futures
+                         |    (open source + decentralized)
+                         |
+                         |
+                         |  ○ ThirdWeb  ○ Privy
+                         |    (Web3-focused, hosted)
+                         |
+   Open Source ←---------+--------→ Proprietary
+                         |
+                         |  ○ Supabase
+                         |    (open source, centralized)
+                         |
+                         |  ○ Auth0  ○ Clerk
+                         |    (proprietary, enterprise)
+                         |
+           Centralized ↓
+```
+
+### Future Convergence
+
+As the roadmap is implemented, Alternate Futures Auth will offer:
+- ✅ Privacy features (like Privy's MPC, but open source)
+- ✅ Web3 features (like ThirdWeb's wallets)
+- ✅ Self-hosting (like Supabase)
+- ✅ Decentralization (unique to Alternate Futures)
+
+**Result**: The only authentication service offering all four pillars: **Privacy + Web3 + Self-Hosting + Decentralization**
+
+---
+
+## 8. Metrics for Success
 
 ### Privacy Metrics
 - [ ] Zero IP addresses stored in plaintext
@@ -596,7 +700,7 @@ You choose. Self-host or use our instance.
 
 ---
 
-## Resources
+## 9. Resources
 
 ### Similar Projects to Learn From
 - **Ory Kratos** - Privacy-first identity
