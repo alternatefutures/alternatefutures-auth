@@ -29,7 +29,7 @@
   "author": "Alternate Futures",
   "license": "MIT",
   "dependencies": {
-    "@hono/node-server": "^1.19.5",
+    "@hono/node-server": "^1.19.6",
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^1.4.0",
     "@noble/secp256k1": "^2.1.0",
@@ -46,12 +46,12 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20.12.4",
     "better-sqlite3": "^12.4.1",
-    "eslint": "^9.0.0",
+    "eslint": "^9.39.1",
     "prettier": "^3.4.2",
     "tsx": "^4.7.1",
     "typescript": "^5.4.3",
     "vitest": "^4.0.8",
-    "wrangler": "^4.42.2"
+    "wrangler": "^4.47.0"
   },
   "engines": {
     "node": ">=18"
