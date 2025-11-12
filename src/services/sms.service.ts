@@ -90,7 +90,7 @@ export const smsService = new SMSService(
 );
 
 console.log('📱 SMS Service Config (httpSMS):');
-console.log(`  API Key: ${process.env.HTTPSMS_API_KEY ? process.env.HTTPSMS_API_KEY.substring(0, 10) + '...' : 'Not configured'}`);
+console.log(`  API Key: ${process.env.HTTPSMS_API_KEY ? 'Configured' : 'Not configured'}`);
 console.log(`  From Number: ${maskPhoneNumber(process.env.HTTPSMS_PHONE_NUMBER)}`);
 
 /**
