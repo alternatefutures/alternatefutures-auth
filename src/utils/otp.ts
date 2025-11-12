@@ -9,10 +9,11 @@ export function generateOTP(length: number = 6): string {
   const digits = '0123456789';
   let otp = '';
 
-  const randomValues = randomBytes(length);
-
-  for (let i = 0; i < length; i++) {
-    otp += digits[randomValues[i] % digits.length];
+  while (otp.length < length) {
+    const byte = randomBytes(1)[0];
+    // Only use byte values < 250 to avoid bias
+    if (byte >= 250) continue;
+    otp += digits[byte % 10];
   }
 
   return otp;
