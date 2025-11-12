@@ -49,7 +49,7 @@ app.post('/', standardRateLimit, async (c) => {
     if (error instanceof z.ZodError) {
       return c.json({
         error: 'Validation error',
-        details: error.errors,
+        details: error.issues,
       }, 400);
     }
 
@@ -175,7 +175,7 @@ app.post('/validate', standardRateLimit, async (c) => {
     if (error instanceof z.ZodError) {
       return c.json({
         error: 'Validation error',
-        details: error.errors,
+        details: error.issues,
       }, 400);
     }
 

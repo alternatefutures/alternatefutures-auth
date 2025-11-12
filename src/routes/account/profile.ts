@@ -105,7 +105,7 @@ app.patch('/', standardRateLimit, async (c) => {
     if (error instanceof z.ZodError) {
       return c.json({
         error: 'Validation error',
-        details: error.errors,
+        details: error.issues,
       }, 400);
     }
 

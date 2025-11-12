@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { nanoid } from 'nanoid';
+import { z } from 'zod';
 import { smsService } from '../../services/sms.service';
 import { dbService } from '../../services/db.service';
 import { jwtService } from '../../services/jwt.service';
@@ -47,7 +48,7 @@ app.post('/request', strictRateLimit, async (c) => {
   } catch (error) {
     console.error('SMS request error:', error);
 
-    if (error instanceof Error && error.message.includes('validation')) {
+    if (error instanceof z.ZodError) {
       return c.json({ error: 'Invalid phone number' }, 400);
     }
 
