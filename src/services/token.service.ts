@@ -123,14 +123,11 @@ export class TokenService {
    * Format: af_live_<base62_random_string>
    */
   private generateToken(environment: 'live' | 'test' = 'live'): string {
+    // Use nanoid with a custom base62 alphabet for uniform, unbiased tokens
     const base62Chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-    const bytes = randomBytes(TOKEN_LENGTH);
-
-    let token = '';
-    for (let i = 0; i < TOKEN_LENGTH; i++) {
-      token += base62Chars[bytes[i] % base62Chars.length];
-    }
-
+    // nanoid.customAlphabet returns a function to generate base62 random string
+    const nanoidBase62 = nanoid.customAlphabet(base62Chars, TOKEN_LENGTH);
+    const token = nanoidBase62();
     return `${TOKEN_PREFIX}_${environment}_${token}`;
   }
 
