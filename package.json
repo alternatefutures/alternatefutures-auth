@@ -39,7 +39,7 @@
     "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.2",
     "nanoid": "^5.0.7",
-    "zod": "^3.23.8"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
