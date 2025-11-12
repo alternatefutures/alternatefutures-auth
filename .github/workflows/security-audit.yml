@@ -1,0 +1,89 @@
+name: Security Audit
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    # Run weekly on Mondays at 9:00 AM
+    - cron: '0 9 * * 1'
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  npm-audit:
+    runs-on: ubuntu-latest
+    name: NPM Security Audit
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        id: audit
+        run: |
+          npm audit --json > audit-results.json || true
+          cat audit-results.json
+
+      - name: Check audit results
+        run: |
+          # Parse the audit results
+          CRITICAL=$(jq '.metadata.vulnerabilities.critical // 0' audit-results.json)
+          HIGH=$(jq '.metadata.vulnerabilities.high // 0' audit-results.json)
+          MODERATE=$(jq '.metadata.vulnerabilities.moderate // 0' audit-results.json)
+          LOW=$(jq '.metadata.vulnerabilities.low // 0' audit-results.json)
+
+          echo "Critical: $CRITICAL"
+          echo "High: $HIGH"
+          echo "Moderate: $MODERATE"
+          echo "Low: $LOW"
+
+          # Fail if there are critical or high vulnerabilities
+          if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
+            echo "::error::Found $CRITICAL critical and $HIGH high severity vulnerabilities"
+            exit 1
+          fi
+
+          # Warn about moderate vulnerabilities but don't fail
+          if [ "$MODERATE" -gt 0 ]; then
+            echo "::warning::Found $MODERATE moderate severity vulnerabilities"
+          fi
+
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-results
+          path: audit-results.json
+          retention-days: 30
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    name: Scan for Secrets
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog Secrets Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified

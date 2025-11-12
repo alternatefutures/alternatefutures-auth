@@ -1,0 +1,43 @@
+version: 2
+updates:
+  # Enable version updates for npm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    groups:
+      # Group all patch and minor updates together
+      dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+          - "minor"
+    # Security updates always get their own PR
+    labels:
+      - "dependencies"
+      - "automated"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    reviewers:
+      - "wonderwomancode"
+    # Automatically rebase PRs when base branch updates
+    rebase-strategy: "auto"
+
+  # Enable security updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    labels:
+      - "github-actions"
+      - "dependencies"
+      - "automated"
+    commit-message:
+      prefix: "chore(ci)"
