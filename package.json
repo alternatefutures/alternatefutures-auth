@@ -34,7 +34,7 @@
     "@noble/hashes": "^2.0.1",
     "@noble/secp256k1": "^3.0.0",
     "dotenv": "^17.2.3",
-    "hono": "^4.10.5",
+    "hono": "^4.10.6",
     "httpsms": "^0.0.4",
     "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.2",
@@ -50,7 +50,7 @@
     "prettier": "^3.4.2",
     "tsx": "^4.7.1",
     "typescript": "^5.4.3",
-    "vitest": "^4.0.8",
+    "vitest": "^4.0.9",
     "wrangler": "^4.42.2"
   },
   "engines": {
