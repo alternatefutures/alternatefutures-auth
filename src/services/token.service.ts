@@ -6,7 +6,7 @@
  */
 
 import { randomBytes } from 'crypto';
-import { nanoid } from 'nanoid';
+import { nanoid, customAlphabet } from 'nanoid';
 import { DatabaseService } from './db.service.js';
 import { rateLimiter } from './rateLimiter.service.js';
 import { tokenServiceLogger } from '../utils/logger.js';
@@ -125,8 +125,8 @@ export class TokenService {
   private generateToken(environment: 'live' | 'test' = 'live'): string {
     // Use nanoid with a custom base62 alphabet for uniform, unbiased tokens
     const base62Chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-    // nanoid.customAlphabet returns a function to generate base62 random string
-    const nanoidBase62 = nanoid.customAlphabet(base62Chars, TOKEN_LENGTH);
+    // customAlphabet returns a function to generate base62 random string
+    const nanoidBase62 = customAlphabet(base62Chars, TOKEN_LENGTH);
     const token = nanoidBase62();
     return `${TOKEN_PREFIX}_${environment}_${token}`;
   }
