@@ -38,8 +38,17 @@ jobs:
 
       - name: Install Akash CLI
         run: |
+          # Install akash node CLI
           curl -sSfL https://raw.githubusercontent.com/akash-network/node/master/install.sh | sh -s -- -b /usr/local/bin
           akash version
+
+          # Install provider-services CLI for send-manifest command
+          PROVIDER_VERSION=$(curl -s https://api.github.com/repos/akash-network/provider/releases/latest | jq -r '.tag_name')
+          echo "Installing provider-services $PROVIDER_VERSION"
+          curl -sSfL "https://github.com/akash-network/provider/releases/download/${PROVIDER_VERSION}/provider-services_linux_amd64.zip" -o /tmp/provider.zip
+          unzip -o /tmp/provider.zip -d /usr/local/bin/
+          chmod +x /usr/local/bin/provider-services
+          provider-services version
 
       - name: Setup Akash Wallet
         run: |
@@ -159,11 +168,13 @@ jobs:
         run: |
           echo "Sending manifest to provider: $DEPLOYMENT_PROVIDER"
 
-          akash provider send-manifest /tmp/deploy-final.yaml \
+          provider-services send-manifest /tmp/deploy-final.yaml \
             --dseq $DEPLOYMENT_DSEQ \
             --provider $DEPLOYMENT_PROVIDER \
             --from deployer \
-            --keyring-backend=test
+            --keyring-backend=test \
+            --node $AKASH_NODE \
+            --chain-id $AKASH_CHAIN_ID
 
           echo "Manifest sent successfully"
 
