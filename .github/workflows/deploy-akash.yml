@@ -1,0 +1,195 @@
+name: Deploy to Akash
+
+on:
+  workflow_run:
+    workflows: ["Build and Publish Docker Image"]
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      force_redeploy:
+        description: 'Force close and redeploy (loses persistent data)'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  AKASH_NODE: https://rpc.akashnet.net:443
+  AKASH_CHAIN_ID: akashnet-2
+  AKASH_GAS: auto
+  AKASH_GAS_ADJUSTMENT: "1.5"
+  AKASH_GAS_PRICES: 0.025uakt
+  AKASH_SIGN_MODE: amino-json
+  # Current deployment details
+  DEPLOYMENT_DSEQ: "24490320"
+  DEPLOYMENT_PROVIDER: "akash18ga02jzaq8cw52anyhzkwta5wygufgu6zsz6xc"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Only run if the docker build succeeded
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Akash CLI
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/akash-network/node/master/install.sh | sh -s -- -b /usr/local/bin
+          akash version
+
+      - name: Setup Akash Wallet
+        run: |
+          echo "${{ secrets.AKASH_MNEMONIC }}" | akash keys add deployer --recover --keyring-backend=test
+          export AKASH_FROM=$(akash keys show deployer -a --keyring-backend=test)
+          echo "AKASH_FROM=$AKASH_FROM" >> $GITHUB_ENV
+          echo "Wallet address: $AKASH_FROM"
+
+      - name: Prepare SDL with secrets
+        run: |
+          # Create the deployment SDL with injected secrets
+          cat > /tmp/deploy.yaml << 'EOF'
+          ---
+          version: "2.0"
+
+          services:
+            auth-api:
+              image: ghcr.io/alternatefutures/service-auth:latest
+              credentials:
+                host: ghcr.io
+                username: alternatefutures
+                password: $GHCR_PAT
+              params:
+                storage:
+                  data:
+                    mount: /app/data
+              expose:
+                - port: 3000
+                  as: 80
+                  to:
+                    - global: true
+                  accept:
+                    - auth.alternatefutures.ai
+              env:
+                - NODE_ENV=production
+                - PORT=3000
+                - DATABASE_URL=/app/data/auth.db
+                - JWT_EXPIRES_IN=15m
+                - JWT_REFRESH_EXPIRES_IN=7d
+                - DOMAIN=alternatefutures.ai
+                - APP_URL=https://auth.alternatefutures.ai
+                - FRONTEND_URL=https://app.alternatefutures.ai
+                - CORS_ORIGIN=https://app.alternatefutures.ai
+                - GOOGLE_REDIRECT_URI=https://auth.alternatefutures.ai/auth/oauth/callback/google
+                - GITHUB_REDIRECT_URI=https://auth.alternatefutures.ai/auth/oauth/callback/github
+                - TWITTER_REDIRECT_URI=https://auth.alternatefutures.ai/auth/oauth/callback/twitter
+                - DISCORD_REDIRECT_URI=https://auth.alternatefutures.ai/auth/oauth/callback/discord
+                - INFISICAL_SITE_URL=https://secrets.alternatefutures.ai
+                - INFISICAL_CLIENT_ID=$INFISICAL_CLIENT_ID
+                - INFISICAL_CLIENT_SECRET=$INFISICAL_CLIENT_SECRET
+                - INFISICAL_PROJECT_ID=$INFISICAL_PROJECT_ID
+                - INFISICAL_ENVIRONMENT=prod
+
+          profiles:
+            compute:
+              auth-api:
+                resources:
+                  cpu:
+                    units: 1.0
+                  memory:
+                    size: 1Gi
+                  storage:
+                    - size: 1Gi
+                    - name: data
+                      size: 2Gi
+                      attributes:
+                        persistent: true
+                        class: beta3
+
+            placement:
+              akash:
+                attributes:
+                  host: akash
+                signedBy:
+                  anyOf:
+                    - "akash1365yvmc4s7awdyj3n2sav7xfx76adc6dnmlx63"
+                pricing:
+                  auth-api:
+                    denom: uakt
+                    amount: 100
+
+          deployment:
+            auth-api:
+              akash:
+                profile: auth-api
+                count: 1
+          EOF
+
+          # Substitute environment variables
+          export GHCR_PAT="${{ secrets.GHCR_PAT }}"
+          export INFISICAL_CLIENT_ID="${{ secrets.INFISICAL_CLIENT_ID }}"
+          export INFISICAL_CLIENT_SECRET="${{ secrets.INFISICAL_CLIENT_SECRET }}"
+          export INFISICAL_PROJECT_ID="${{ secrets.INFISICAL_PROJECT_ID }}"
+
+          envsubst < /tmp/deploy.yaml > /tmp/deploy-final.yaml
+          echo "SDL prepared successfully"
+
+      - name: Update Deployment
+        run: |
+          echo "Updating deployment DSEQ: $DEPLOYMENT_DSEQ"
+
+          # Update the deployment with new SDL
+          akash tx deployment update /tmp/deploy-final.yaml \
+            --dseq $DEPLOYMENT_DSEQ \
+            --from deployer \
+            --keyring-backend=test \
+            --yes \
+            --output json | tee /tmp/update-result.json
+
+          # Check result
+          TX_HASH=$(cat /tmp/update-result.json | jq -r '.txhash')
+          echo "Transaction hash: $TX_HASH"
+
+          # Wait for transaction to be included
+          sleep 10
+          akash query tx $TX_HASH --output json
+
+      - name: Send Manifest to Provider
+        run: |
+          echo "Sending manifest to provider: $DEPLOYMENT_PROVIDER"
+
+          akash provider send-manifest /tmp/deploy-final.yaml \
+            --dseq $DEPLOYMENT_DSEQ \
+            --provider $DEPLOYMENT_PROVIDER \
+            --from deployer \
+            --keyring-backend=test
+
+          echo "Manifest sent successfully"
+
+      - name: Verify Deployment
+        run: |
+          echo "Waiting for deployment to update..."
+          sleep 30
+
+          # Check deployment status
+          akash query deployment get \
+            --owner $AKASH_FROM \
+            --dseq $DEPLOYMENT_DSEQ \
+            --output json | jq '.deployment.state'
+
+          # Get lease status
+          akash query market lease list \
+            --owner $AKASH_FROM \
+            --dseq $DEPLOYMENT_DSEQ \
+            --output json | jq '.leases[0].lease.state'
+
+      - name: Deployment Summary
+        run: |
+          echo "## Akash Deployment Updated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**DSEQ**: \`$DEPLOYMENT_DSEQ\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Provider**: \`$DEPLOYMENT_PROVIDER\`" >> $GITHUB_STEP_SUMMARY
+          echo "**URL**: https://auth.alternatefutures.ai" >> $GITHUB_STEP_SUMMARY
