@@ -52,9 +52,11 @@ jobs:
 
       - name: Setup Akash Wallet
         run: |
-          echo "${{ secrets.AKASH_MNEMONIC }}" | akash keys add deployer --recover --keyring-backend=test
-          export AKASH_FROM=$(akash keys show deployer -a --keyring-backend=test)
+          mkdir -p $HOME/.akash
+          echo "${{ secrets.AKASH_MNEMONIC }}" | akash keys add deployer --recover --keyring-backend=test --home $HOME/.akash
+          export AKASH_FROM=$(akash keys show deployer -a --keyring-backend=test --home $HOME/.akash)
           echo "AKASH_FROM=$AKASH_FROM" >> $GITHUB_ENV
+          echo "AKASH_HOME=$HOME/.akash" >> $GITHUB_ENV
           echo "Wallet address: $AKASH_FROM"
 
       - name: Setup Akash Certificate
@@ -65,6 +67,7 @@ jobs:
           akash tx cert create client \
             --from deployer \
             --keyring-backend=test \
+            --home $AKASH_HOME \
             --yes \
             --gas-prices 0.025uakt \
             --gas auto \
@@ -72,6 +75,9 @@ jobs:
 
           # Wait for transaction to be included
           sleep 10
+
+          # List the cert directory
+          ls -la $AKASH_HOME/
 
           echo "Certificate setup complete"
 
@@ -168,13 +174,15 @@ jobs:
         run: |
           echo "Sending manifest to provider: $DEPLOYMENT_PROVIDER"
 
+          # The provider-services send-manifest command needs home directory for cert
+          export AKASH_HOME=$HOME/.akash
+
           provider-services send-manifest /tmp/deploy-final.yaml \
             --dseq $DEPLOYMENT_DSEQ \
             --provider $DEPLOYMENT_PROVIDER \
             --from deployer \
             --keyring-backend=test \
-            --node $AKASH_NODE \
-            --chain-id $AKASH_CHAIN_ID
+            --home $AKASH_HOME
 
           echo "Manifest sent successfully"
 
