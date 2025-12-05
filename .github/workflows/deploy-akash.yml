@@ -194,8 +194,8 @@ jobs:
 
           cat /tmp/deployments.json | jq '.deployments'
 
-          # Get the last (newest) deployment's dseq
-          DSEQ=$(cat /tmp/deployments.json | jq -r '.deployments | last | .deployment.deployment_id.dseq')
+          # Get the last (newest) deployment's dseq using array index
+          DSEQ=$(cat /tmp/deployments.json | jq -r '.deployments[-1].deployment.id.dseq')
 
           if [ "$DSEQ" = "null" ] || [ -z "$DSEQ" ]; then
             echo "ERROR: Could not extract DSEQ from deployments"
