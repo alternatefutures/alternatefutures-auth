@@ -48,6 +48,24 @@ jobs:
           echo "AKASH_FROM=$AKASH_FROM" >> $GITHUB_ENV
           echo "Wallet address: $AKASH_FROM"
 
+      - name: Setup Akash Certificate
+        run: |
+          echo "Creating client certificate for provider communication..."
+
+          # Create a new certificate (will be broadcast to chain)
+          akash tx cert create client \
+            --from deployer \
+            --keyring-backend=test \
+            --yes \
+            --gas-prices 0.025uakt \
+            --gas auto \
+            --gas-adjustment 1.5 || echo "Certificate may already exist"
+
+          # Wait for transaction to be included
+          sleep 10
+
+          echo "Certificate setup complete"
+
       - name: Prepare SDL with secrets
         run: |
           # Create the deployment SDL with injected secrets
@@ -136,26 +154,6 @@ jobs:
 
           envsubst < /tmp/deploy.yaml > /tmp/deploy-final.yaml
           echo "SDL prepared successfully"
-
-      - name: Update Deployment
-        run: |
-          echo "Updating deployment DSEQ: $DEPLOYMENT_DSEQ"
-
-          # Update the deployment with new SDL
-          akash tx deployment update /tmp/deploy-final.yaml \
-            --dseq $DEPLOYMENT_DSEQ \
-            --from deployer \
-            --keyring-backend=test \
-            --yes \
-            --output json | tee /tmp/update-result.json
-
-          # Check result
-          TX_HASH=$(cat /tmp/update-result.json | jq -r '.txhash')
-          echo "Transaction hash: $TX_HASH"
-
-          # Wait for transaction to be included
-          sleep 10
-          akash query tx $TX_HASH --output json
 
       - name: Send Manifest to Provider
         run: |
