@@ -50,16 +50,35 @@ jobs:
 
       - name: Setup Certificate
         run: |
-          # Create certificate for provider communication
-          akash tx cert create client \
+          echo "Creating certificate for provider communication..."
+
+          # Generate certificate locally first
+          provider-services keys gen \
+            --home $AKASH_HOME \
+            --from deployer \
+            --keyring-backend=test
+
+          # Check if cert file exists
+          if [ -f "$AKASH_HOME/$AKASH_FROM.pem" ]; then
+            echo "Certificate file generated at $AKASH_HOME/$AKASH_FROM.pem"
+          else
+            echo "ERROR: Certificate file not found!"
+            ls -la $AKASH_HOME/
+            exit 1
+          fi
+
+          # Publish certificate to chain
+          akash tx cert publish client \
             --from deployer \
             --keyring-backend=test \
             --home $AKASH_HOME \
             --yes \
             --gas-prices $AKASH_GAS_PRICES \
             --gas auto \
-            --gas-adjustment $AKASH_GAS_ADJUSTMENT 2>/dev/null || echo "Certificate exists"
+            --gas-adjustment $AKASH_GAS_ADJUSTMENT || echo "Certificate may already be published"
+
           sleep 10
+          echo "Certificate setup complete"
 
       - name: Prepare SDL
         run: |
