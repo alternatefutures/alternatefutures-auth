@@ -169,8 +169,8 @@ jobs:
         run: |
           echo "Creating new deployment..."
 
-          # Create deployment
-          RESULT=$(akash tx deployment create /tmp/deploy.yaml \
+          # Create deployment and capture transaction
+          akash tx deployment create /tmp/deploy.yaml \
             --from deployer \
             --keyring-backend=test \
             --home $AKASH_HOME \
@@ -178,16 +178,30 @@ jobs:
             --gas-prices $AKASH_GAS_PRICES \
             --gas auto \
             --gas-adjustment $AKASH_GAS_ADJUSTMENT \
-            --output json)
+            --output json > /tmp/tx-result.json 2>&1 || true
 
-          echo "$RESULT" | jq .
+          cat /tmp/tx-result.json
 
-          # Extract dseq from result
+          # Wait for transaction to be included
           sleep 15
-          DSEQ=$(akash query deployment list \
+
+          # Get all deployments and find the latest one
+          echo "Fetching deployments..."
+          akash query deployment list \
             --owner $AKASH_FROM \
             --state active \
-            --output json | jq -r '.deployments[-1].deployment.deployment_id.dseq')
+            --output json > /tmp/deployments.json
+
+          cat /tmp/deployments.json | jq '.deployments'
+
+          # Get the last (newest) deployment's dseq
+          DSEQ=$(cat /tmp/deployments.json | jq -r '.deployments | last | .deployment.deployment_id.dseq')
+
+          if [ "$DSEQ" = "null" ] || [ -z "$DSEQ" ]; then
+            echo "ERROR: Could not extract DSEQ from deployments"
+            cat /tmp/deployments.json
+            exit 1
+          fi
 
           echo "New DSEQ: $DSEQ"
           echo "DSEQ=$DSEQ" >> $GITHUB_ENV
