@@ -52,18 +52,19 @@ jobs:
         run: |
           echo "Creating certificate for provider communication..."
 
-          # Generate certificate locally first
-          provider-services keys gen \
-            --home $AKASH_HOME \
+          # Generate and broadcast certificate in one step
+          akash tx cert generate client \
             --from deployer \
-            --keyring-backend=test
+            --keyring-backend=test \
+            --home $AKASH_HOME
 
           # Check if cert file exists
+          ls -la $AKASH_HOME/
+
           if [ -f "$AKASH_HOME/$AKASH_FROM.pem" ]; then
             echo "Certificate file generated at $AKASH_HOME/$AKASH_FROM.pem"
           else
             echo "ERROR: Certificate file not found!"
-            ls -la $AKASH_HOME/
             exit 1
           fi
 
