@@ -95,10 +95,6 @@ jobs:
                 host: ghcr.io
                 username: alternatefutures
                 password: "${{ secrets.GHCR_PAT }}"
-              params:
-                storage:
-                  data:
-                    mount: /app/data
               expose:
                 - port: 3000
                   as: 80
@@ -109,7 +105,7 @@ jobs:
               env:
                 - NODE_ENV=production
                 - PORT=3000
-                - DATABASE_URL=/app/data/auth.db
+                - DATABASE_URL=${{ secrets.DATABASE_URL }}
                 - JWT_EXPIRES_IN=15m
                 - JWT_REFRESH_EXPIRES_IN=7d
                 - DOMAIN=alternatefutures.ai
@@ -136,11 +132,6 @@ jobs:
                     size: 1Gi
                   storage:
                     - size: 1Gi
-                    - name: data
-                      size: 2Gi
-                      attributes:
-                        persistent: true
-                        class: beta3
 
             placement:
               akash:
