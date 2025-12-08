@@ -17,6 +17,12 @@ RUN rm -rf dist && npx esbuild src/index.ts --bundle --platform=node --target=no
 # Remove devDependencies after build
 RUN npm prune --production
 
+# Create data directory for SQLite
+RUN mkdir -p /app/data
+
+# Set default database path
+ENV DATABASE_URL=/app/data/auth.db
+
 # Expose port (configurable via PORT env var, defaults to 3000)
 EXPOSE 3000
 
