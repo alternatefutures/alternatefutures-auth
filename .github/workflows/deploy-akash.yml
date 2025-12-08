@@ -90,7 +90,7 @@ jobs:
 
           services:
             auth-api:
-              image: ghcr.io/alternatefutures/service-auth:v20251207-amd64-v2
+              image: ghcr.io/alternatefutures/service-auth:v3-1765188513
               credentials:
                 host: ghcr.io
                 username: alternatefutures
