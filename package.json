@@ -34,26 +34,26 @@
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1",
     "@noble/secp256k1": "^3.0.0",
-    "better-sqlite3": "^12.4.1",
+    "better-sqlite3": "^12.5.0",
     "dotenv": "^17.2.3",
-    "ethers": "^6.13.0",
-    "hono": "^4.10.5",
+    "ethers": "^6.16.0",
+    "hono": "^4.10.7",
     "httpsms": "^0.0.4",
     "ioredis": "^5.8.2",
-    "jsonwebtoken": "^9.0.2",
+    "jsonwebtoken": "^9.0.3",
     "nanoid": "^5.0.7",
-    "zod": "^4.1.12"
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^24.10.1",
     "eslint": "^9.0.0",
-    "prettier": "^3.4.2",
-    "tsx": "^4.7.1",
+    "prettier": "^3.7.4",
+    "tsx": "^4.21.0",
     "typescript": "^5.4.3",
-    "vitest": "^4.0.8",
-    "wrangler": "^4.42.2"
+    "vitest": "^4.0.15",
+    "wrangler": "^4.53.0"
   },
   "engines": {
     "node": ">=18"
