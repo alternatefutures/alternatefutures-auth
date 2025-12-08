@@ -176,21 +176,36 @@ jobs:
           # Wait for transaction to be included
           sleep 15
 
-          # Get all deployments and find the latest one
-          echo "Fetching deployments..."
-          akash query deployment list \
-            --owner $AKASH_FROM \
-            --state active \
-            --output json > /tmp/deployments.json
+          # Extract DSEQ from transaction result (more reliable than querying deployments)
+          echo "Extracting DSEQ from transaction result..."
 
-          cat /tmp/deployments.json | jq '.deployments'
+          # The dseq is nested inside the "id" attribute as a JSON string
+          # Event type: akash.deployment.v1.EventDeploymentCreated
+          DSEQ=$(cat /tmp/tx-result.json | jq -r '
+            .events[] |
+            select(.type=="akash.deployment.v1.EventDeploymentCreated") |
+            .attributes[] |
+            select(.key=="id") |
+            .value | fromjson | .dseq' 2>/dev/null)
 
-          # Get the last (newest) deployment's dseq using array index
-          DSEQ=$(cat /tmp/deployments.json | jq -r '.deployments[-1].deployment.id.dseq')
+          # Fallback: query deployments and get highest DSEQ (newest)
+          if [ "$DSEQ" = "null" ] || [ -z "$DSEQ" ]; then
+            echo "Could not extract from tx result, querying deployments..."
+            akash query deployment list \
+              --owner $AKASH_FROM \
+              --output json > /tmp/deployments.json
+
+            # Sort by DSEQ descending to get the newest
+            DSEQ=$(cat /tmp/deployments.json | jq -r '
+              .deployments |
+              sort_by(.deployment.id.dseq | tonumber) |
+              reverse |
+              .[0].deployment.id.dseq')
+          fi
 
           if [ "$DSEQ" = "null" ] || [ -z "$DSEQ" ]; then
-            echo "ERROR: Could not extract DSEQ from deployments"
-            cat /tmp/deployments.json
+            echo "ERROR: Could not extract DSEQ"
+            cat /tmp/tx-result.json
             exit 1
           fi
 
