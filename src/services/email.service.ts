@@ -3,6 +3,8 @@
  * Using Resend API (https://resend.com)
  */
 
+import { secretsService } from './secrets.service';
+
 export interface EmailOptions {
   to: string;
   subject: string;
@@ -11,12 +13,14 @@ export interface EmailOptions {
 }
 
 export class EmailService {
-  private apiKey: string;
   private fromEmail: string;
 
-  constructor(apiKey: string, fromEmail: string = 'auth@alternatefutures.ai') {
-    this.apiKey = apiKey;
+  constructor(fromEmail: string = 'auth@alternatefutures.ai') {
     this.fromEmail = fromEmail;
+  }
+
+  private get apiKey(): string {
+    return secretsService.get('RESEND_API_KEY') || '';
   }
 
   /**
@@ -142,11 +146,10 @@ export class EmailService {
 }
 
 // Create singleton instance
-const apiKey = process.env.RESEND_API_KEY || '';
 const fromEmail = process.env.FROM_EMAIL || 'auth@alternatefutures.ai';
 
 console.log('📧 Email Service Config:');
-console.log('  API Key:', apiKey ? 'SET' : 'NOT SET');
 console.log('  From Email:', fromEmail);
+console.log('  (API Key loaded from secrets service at runtime)');
 
-export const emailService = new EmailService(apiKey, fromEmail);
+export const emailService = new EmailService(fromEmail);

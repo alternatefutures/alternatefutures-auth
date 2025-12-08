@@ -2,9 +2,13 @@ import 'dotenv/config';
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { corsMiddleware, devCorsMiddleware } from './middleware/cors';
+import { secretsService } from './services/secrets.service';
 import authRoutes from './routes/auth';
 import accountRoutes from './routes/account';
 import tokensRoutes from './routes/tokens';
+
+// Initialize secrets before anything else
+await secretsService.initialize();
 
 const app = new Hono();
 

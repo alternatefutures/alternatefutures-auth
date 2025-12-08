@@ -1,5 +1,6 @@
 import jwt, { type SignOptions } from 'jsonwebtoken';
 import { nanoid } from 'nanoid';
+import { secretsService } from './secrets.service';
 
 export interface TokenPayload {
   userId: string;
@@ -9,17 +10,23 @@ export interface TokenPayload {
 }
 
 export interface JWTConfig {
-  accessTokenSecret: string;
-  refreshTokenSecret: string;
   accessTokenExpiry: string;
   refreshTokenExpiry: string;
 }
 
 export class JWTService {
-  private config: JWTConfig;
+  private expiryConfig: JWTConfig;
 
   constructor(config: JWTConfig) {
-    this.config = config;
+    this.expiryConfig = config;
+  }
+
+  private get accessTokenSecret(): string {
+    return secretsService.get('JWT_SECRET') || 'development-secret';
+  }
+
+  private get refreshTokenSecret(): string {
+    return secretsService.get('JWT_REFRESH_SECRET') || 'development-refresh-secret';
   }
 
   /**
@@ -35,8 +42,8 @@ export class JWTService {
       type: 'access',
     };
 
-    return jwt.sign(payload, this.config.accessTokenSecret, {
-      expiresIn: this.config.accessTokenExpiry as string,
+    return jwt.sign(payload, this.accessTokenSecret, {
+      expiresIn: this.expiryConfig.accessTokenExpiry as string,
       issuer: 'alternatefutures-auth',
       audience: 'alternatefutures-app',
     } as SignOptions);
@@ -52,8 +59,8 @@ export class JWTService {
       type: 'refresh',
     };
 
-    return jwt.sign(payload, this.config.refreshTokenSecret, {
-      expiresIn: this.config.refreshTokenExpiry as string,
+    return jwt.sign(payload, this.refreshTokenSecret, {
+      expiresIn: this.expiryConfig.refreshTokenExpiry as string,
       issuer: 'alternatefutures-auth',
       audience: 'alternatefutures-app',
     } as SignOptions);
@@ -76,9 +83,9 @@ export class JWTService {
         sessionId,
         type: 'access',
       } as TokenPayload,
-      this.config.accessTokenSecret,
+      this.accessTokenSecret,
       {
-        expiresIn: this.config.accessTokenExpiry as string,
+        expiresIn: this.expiryConfig.accessTokenExpiry as string,
         issuer: 'alternatefutures-auth',
         audience: 'alternatefutures-app',
       } as SignOptions
@@ -90,9 +97,9 @@ export class JWTService {
         sessionId,
         type: 'refresh',
       } as TokenPayload,
-      this.config.refreshTokenSecret,
+      this.refreshTokenSecret,
       {
-        expiresIn: this.config.refreshTokenExpiry as string,
+        expiresIn: this.expiryConfig.refreshTokenExpiry as string,
         issuer: 'alternatefutures-auth',
         audience: 'alternatefutures-app',
       } as SignOptions
@@ -122,7 +129,7 @@ export class JWTService {
       }
 
       // Now verify with correct secret
-      const decoded = jwt.verify(token, this.config.accessTokenSecret, {
+      const decoded = jwt.verify(token, this.accessTokenSecret, {
         issuer: 'alternatefutures-auth',
         audience: 'alternatefutures-app',
       }) as TokenPayload;
@@ -156,7 +163,7 @@ export class JWTService {
       }
 
       // Now verify with correct secret
-      const decoded = jwt.verify(token, this.config.refreshTokenSecret, {
+      const decoded = jwt.verify(token, this.refreshTokenSecret, {
         issuer: 'alternatefutures-auth',
         audience: 'alternatefutures-app',
       }) as TokenPayload;
@@ -205,9 +212,8 @@ export class JWTService {
 }
 
 // Create singleton instance
+// Secrets are loaded from secretsService at runtime
 export const jwtService = new JWTService({
-  accessTokenSecret: process.env.JWT_SECRET || 'your-secret-key',
-  refreshTokenSecret: process.env.JWT_REFRESH_SECRET || 'your-refresh-secret',
   accessTokenExpiry: process.env.JWT_EXPIRES_IN || '15m',
   refreshTokenExpiry: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
 });

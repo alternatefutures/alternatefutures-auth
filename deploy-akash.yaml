@@ -1,10 +1,19 @@
 ---
+# Akash SDL Template - DO NOT commit actual secrets here
+# Use deploy script or GitHub Actions to inject secrets at deploy time
 version: "2.0"
 
 services:
   auth-api:
-    # Use Node base image and build from source
-    image: node:20-alpine
+    image: ghcr.io/alternatefutures/auth-service:latest
+    credentials:
+      host: ghcr.io
+      username: alternatefutures
+      password: ${GHCR_PAT}  # Injected at deploy time
+    params:
+      storage:
+        data:
+          mount: /app/data
     expose:
       - port: 3000
         as: 80
@@ -18,44 +27,28 @@ services:
       - PORT=3000
       - DATABASE_URL=/app/data/auth.db
 
-      # JWT Secrets (CHANGE THESE!)
-      - JWT_SECRET=CHANGE_THIS_IN_PRODUCTION
-      - JWT_REFRESH_SECRET=CHANGE_THIS_TOO
+      # JWT Token Expiry (non-sensitive)
       - JWT_EXPIRES_IN=15m
       - JWT_REFRESH_EXPIRES_IN=7d
 
-      # URLs
+      # URLs (non-sensitive)
       - DOMAIN=alternatefutures.ai
       - APP_URL=https://auth.alternatefutures.ai
       - FRONTEND_URL=https://app.alternatefutures.ai
       - CORS_ORIGIN=https://app.alternatefutures.ai
 
-      # Email Service (Resend)
-      - RESEND_API_KEY=YOUR_RESEND_KEY_HERE
-
-      # SMS Service (httpSMS)
-      - HTTPSMS_API_KEY=YOUR_HTTPSMS_KEY_HERE
-      - HTTPSMS_PHONE_NUMBER=YOUR_PHONE_NUMBER
-
-      # OAuth - Google
-      - GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
-      - GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_SECRET
+      # OAuth Redirect URIs (non-sensitive, just URLs)
       - GOOGLE_REDIRECT_URI=https://auth.alternatefutures.ai/auth/oauth/callback/google
-
-      # OAuth - GitHub
-      - GITHUB_CLIENT_ID=YOUR_GITHUB_CLIENT_ID
-      - GITHUB_CLIENT_SECRET=YOUR_GITHUB_SECRET
       - GITHUB_REDIRECT_URI=https://auth.alternatefutures.ai/auth/oauth/callback/github
-
-      # OAuth - Twitter/X
-      - TWITTER_CLIENT_ID=YOUR_TWITTER_CLIENT_ID
-      - TWITTER_CLIENT_SECRET=YOUR_TWITTER_SECRET
       - TWITTER_REDIRECT_URI=https://auth.alternatefutures.ai/auth/oauth/callback/twitter
-
-      # OAuth - Discord
-      - DISCORD_CLIENT_ID=YOUR_DISCORD_CLIENT_ID
-      - DISCORD_CLIENT_SECRET=YOUR_DISCORD_SECRET
       - DISCORD_REDIRECT_URI=https://auth.alternatefutures.ai/auth/oauth/callback/discord
+
+      # Infisical credentials - injected at deploy time from GitHub Secrets
+      - INFISICAL_SITE_URL=https://secrets.alternatefutures.ai
+      - INFISICAL_CLIENT_ID=${INFISICAL_CLIENT_ID}
+      - INFISICAL_CLIENT_SECRET=${INFISICAL_CLIENT_SECRET}
+      - INFISICAL_PROJECT_ID=${INFISICAL_PROJECT_ID}
+      - INFISICAL_ENVIRONMENT=prod
 
 profiles:
   compute:
