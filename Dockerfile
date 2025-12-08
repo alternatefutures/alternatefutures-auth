@@ -11,8 +11,8 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build TypeScript
-RUN npm run build
+# Clean any existing dist and build with esbuild (bundles everything into single file)
+RUN rm -rf dist && npx esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.js --format=esm --packages=external
 
 # Remove devDependencies after build
 RUN npm prune --production
