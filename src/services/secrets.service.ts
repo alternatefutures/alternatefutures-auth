@@ -116,6 +116,8 @@ class SecretsService {
       console.log(`   ✅ Loaded ${secretsList.length} secrets from service project`);
 
       console.log('✅ Secrets loaded from Infisical');
+      console.log('   Loaded secrets:', Object.keys(this.secrets).join(', '));
+      console.log('   RESEND_API_KEY loaded:', !!this.secrets.RESEND_API_KEY);
       this.initialized = true;
     } catch (error) {
       console.error('❌ Failed to connect to Infisical:', error);

@@ -62,10 +62,20 @@ export class EmailService {
    * Send verification code email
    */
   async sendVerificationCode(email: string, code: string): Promise<void> {
+    const hasApiKey = !!this.apiKey;
+    const isDev = process.env.NODE_ENV === 'development';
+
+    console.log('📧 Email service sendVerificationCode called:');
+    console.log(`   - Has API key: ${hasApiKey}`);
+    console.log(`   - API key length: ${this.apiKey?.length || 0}`);
+    console.log(`   - NODE_ENV: ${process.env.NODE_ENV}`);
+    console.log(`   - Is development mode: ${isDev}`);
+
     // In development without API key, just log the code
-    if (!this.apiKey || process.env.NODE_ENV === 'development') {
+    if (!hasApiKey || isDev) {
       console.log('\n🔐 ========================================');
       console.log('📧 VERIFICATION CODE (Development Mode)');
+      console.log(`   Reason: ${!hasApiKey ? 'No API key' : 'Development environment'}`);
       console.log('========================================');
       console.log(`Email: ${email}`);
       console.log(`Code: ${code}`);
