@@ -39,7 +39,6 @@
     "ethers": "^6.13.0",
     "hono": "^4.10.5",
     "httpsms": "^0.0.4",
-    "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.2",
     "nanoid": "^5.0.7",
     "zod": "^4.1.12"
