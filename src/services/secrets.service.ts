@@ -28,6 +28,8 @@ class SecretsService {
 
   /**
    * Initialize the Infisical client and fetch secrets
+   * Fetches from both global-shared project and service-specific project
+   * Service-specific secrets take precedence over global secrets
    */
   async initialize(): Promise<void> {
     if (this.initialized) {
@@ -37,6 +39,7 @@ class SecretsService {
     const clientId = process.env.INFISICAL_CLIENT_ID;
     const clientSecret = process.env.INFISICAL_CLIENT_SECRET;
     const projectId = process.env.INFISICAL_PROJECT_ID;
+    const globalProjectId = process.env.INFISICAL_GLOBAL_PROJECT_ID;
     const environment = process.env.INFISICAL_ENVIRONMENT || 'prod';
 
     // If Infisical credentials are not set, fall back to environment variables
@@ -73,20 +76,44 @@ class SecretsService {
         },
       });
 
-      // Fetch all secrets from the project
+      // First, fetch secrets from global-shared project (if configured)
+      if (globalProjectId) {
+        try {
+          console.log('📦 Fetching secrets from global-shared project...');
+          const globalSecrets = await this.client.listSecrets({
+            projectId: globalProjectId,
+            environment,
+            path: '/',
+          });
+
+          for (const secret of globalSecrets) {
+            const key = secret.secretKey as keyof Secrets;
+            if (this.isValidSecretKey(key)) {
+              this.secrets[key] = secret.secretValue;
+            }
+          }
+          console.log(`   ✅ Loaded ${globalSecrets.length} secrets from global-shared`);
+        } catch (globalError) {
+          console.warn('⚠️ Could not fetch global-shared secrets:', globalError);
+        }
+      }
+
+      // Then, fetch secrets from service-specific project (these take precedence)
+      console.log('📦 Fetching secrets from service project...');
       const secretsList = await this.client.listSecrets({
         projectId,
         environment,
         path: '/',
       });
 
-      // Map secrets to our secrets object
+      // Map secrets to our secrets object (service-specific override global)
       for (const secret of secretsList) {
         const key = secret.secretKey as keyof Secrets;
-        if (key in this.secrets || this.isValidSecretKey(key)) {
+        if (this.isValidSecretKey(key)) {
           this.secrets[key] = secret.secretValue;
         }
       }
+      console.log(`   ✅ Loaded ${secretsList.length} secrets from service project`);
 
       console.log('✅ Secrets loaded from Infisical');
       this.initialized = true;
