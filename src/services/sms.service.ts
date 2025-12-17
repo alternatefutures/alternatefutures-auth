@@ -1,9 +1,9 @@
 /**
  * SMS service for sending verification codes
- * Using httpSMS - Open Source SMS Gateway (https://httpsms.com)
+ * Using Twilio (https://twilio.com)
  */
 
-import HttpSms from 'httpsms';
+import Twilio from 'twilio';
 
 export interface SMSOptions {
   to: string;
@@ -11,37 +11,38 @@ export interface SMSOptions {
 }
 
 export class SMSService {
-  private client: HttpSms | null;
+  private client: Twilio.Twilio | null;
   private phoneNumber: string;
-  private apiKey: string;
+  private accountSid: string;
+  private authToken: string;
 
-  constructor(apiKey: string, phoneNumber: string) {
-    this.apiKey = apiKey;
+  constructor(accountSid: string, authToken: string, phoneNumber: string) {
+    this.accountSid = accountSid;
+    this.authToken = authToken;
     this.phoneNumber = phoneNumber;
 
-    // Only initialize client if API key is provided
-    this.client = apiKey ? new HttpSms(apiKey) : null;
+    // Only initialize client if credentials are provided
+    this.client = accountSid && authToken ? Twilio(accountSid, authToken) : null;
   }
 
   /**
-   * Send an SMS using httpSMS API
+   * Send an SMS using Twilio API
    */
   async sendSMS(options: SMSOptions): Promise<void> {
     const { to, body } = options;
 
     if (!this.client) {
-      throw new Error('SMS service not configured. Please set HTTPSMS_API_KEY.');
+      throw new Error('SMS service not configured. Please set TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN.');
     }
 
     try {
-      const response = await this.client.messages.postSend({
+      const message = await this.client.messages.create({
         from: this.phoneNumber,
         to: to,
-        content: body,
-        encrypted: false, // Set to true if you want end-to-end encryption
+        body: body,
       });
 
-      console.log('SMS sent successfully:', response.id);
+      console.log('SMS sent successfully:', message.sid);
     } catch (error) {
       console.error('Error sending SMS:', error);
       throw error;
@@ -53,7 +54,7 @@ export class SMSService {
    */
   async sendVerificationCode(phoneNumber: string, code: string): Promise<void> {
     // In development/test without credentials, just log the code
-    if (!this.apiKey || process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+    if (!this.accountSid || process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
       console.log('\n🔐 ========================================');
       console.log('📱 VERIFICATION CODE (Development Mode)');
       console.log('========================================');
@@ -85,13 +86,14 @@ export class SMSService {
 
 // Export singleton instance
 export const smsService = new SMSService(
-  process.env.HTTPSMS_API_KEY || '',
-  process.env.HTTPSMS_PHONE_NUMBER || ''
+  process.env.TWILIO_ACCOUNT_SID || '',
+  process.env.TWILIO_AUTH_TOKEN || '',
+  process.env.TWILIO_PHONE_NUMBER || ''
 );
 
-console.log('📱 SMS Service Config (httpSMS):');
-console.log(`  API Key: ${process.env.HTTPSMS_API_KEY ? 'Configured' : 'Not configured'}`);
-console.log(`  From Number: ${maskPhoneNumber(process.env.HTTPSMS_PHONE_NUMBER)}`);
+console.log('📱 SMS Service Config (Twilio):');
+console.log(`  Account SID: ${process.env.TWILIO_ACCOUNT_SID ? 'Configured' : 'Not configured'}`);
+console.log(`  From Number: ${maskPhoneNumber(process.env.TWILIO_PHONE_NUMBER)}`);
 
 /**
  * Mask all but last 2 digits of a phone number for safe logging.
