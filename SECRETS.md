@@ -86,9 +86,14 @@ The PostgreSQL admin credentials should be stored in 1Password:
 
 | Item Name | Field | Description |
 |-----------|-------|-------------|
-| `AlternateFutures PostgreSQL` | `password` | Admin password for postgres user |
-| `AlternateFutures PostgreSQL` | `host` | Database host (Akash provider URL) |
-| `AlternateFutures PostgreSQL` | `connection_string` | Full DATABASE_URL |
+| `AF Platform PostgreSQL (Akash DSEQ 24520638)` | `password` | Admin password for postgres user |
+| `AF Platform PostgreSQL (Akash DSEQ 24520638)` | `host` | Database host (Akash provider URL) |
+| `AF Platform PostgreSQL (Akash DSEQ 24520638)` | `connection_string` | Full DATABASE_URL |
+| `AF Platform PostgreSQL (Akash DSEQ 24520638)` | `dseq` | Akash deployment sequence number |
+| `AF Platform PostgreSQL (Akash DSEQ 24520638)` | `provider` | Akash provider address |
+
+**Note:** This is the shared platform database used by both `service-cloud-api` and `service-auth`.
+Do NOT confuse with Infisical's internal PostgreSQL database.
 
 ### Infisical Configuration
 
