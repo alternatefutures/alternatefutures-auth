@@ -1,26 +1,63 @@
 name: Deploy to Akash
 
+# IMPORTANT SSL NOTE:
+# ====================
+# Akash providers use DNS-01 Let's Encrypt challenges with wildcard certs
+# for their own domains (e.g., *.europlots.com). They CANNOT provision certs
+# for custom domains (auth.alternatefutures.ai) because DNS-01 requires
+# control over the domain's DNS records.
+#
+# SOLUTION: Deploy the Caddy SSL proxy (see deploy-caddy-proxy.yml) on Fly.io
+# which handles HTTP-01 challenges for custom domains. The proxy then routes
+# traffic to the Akash backend via the provider's ingress URL.
+#
+# Architecture:
+#   User → auth.alternatefutures.ai (DNS → Fly.io)
+#        → Caddy proxy (handles SSL via HTTP-01)
+#        → Akash backend via provider ingress URL
+#
+# After deploying this workflow, update the Caddy proxy's AUTH_BACKEND
+# environment variable with the new ingress URL.
+
 on:
-  workflow_run:
-    workflows: ["Build and Publish Docker Image"]
-    types:
-      - completed
-    branches:
-      - main
+  # CHANGED: Manual-only deployment to prevent auto-deployments
+  # This workflow creates a NEW deployment with a NEW DSEQ, requiring DNS updates.
+  # Previously triggered by docker build completion - now manual only for safety.
   workflow_dispatch:
+    inputs:
+      confirm_deployment:
+        description: 'I understand this creates a new DSEQ and may require DNS update'
+        required: true
+        default: false
+        type: boolean
 
 env:
   AKASH_NODE: https://rpc.akashnet.net:443
   AKASH_CHAIN_ID: akashnet-2
   AKASH_GAS_PRICES: 0.025uakt
   AKASH_GAS_ADJUSTMENT: "1.5"
-  # Preferred provider (akashian - good connectivity)
+  # Provider selection
+  # Note: All Akash providers use wildcard certs for their domains.
+  # Custom domain SSL must be handled externally (Caddy proxy on Fly.io).
   PREFERRED_PROVIDER: "akash1r2yz5fzkk9gt0r3mk9u2c29q5mmtef050cryak"
 
 jobs:
-  deploy:
+  validate:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Validate deployment confirmation
+        if: ${{ inputs.confirm_deployment != true }}
+        run: |
+          echo "::error::You must confirm you understand this creates a new DSEQ"
+          echo ""
+          echo "This workflow creates a FULL REDEPLOY with a new DSEQ."
+          echo "After deployment, you may need to update DNS records or proxy backends."
+          exit 1
+
+  deploy:
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: Checkout repository
@@ -264,12 +301,12 @@ jobs:
 
           echo "Manifest sent"
 
-      - name: Update Caddy Backend
+      - name: Get Ingress URL
         run: |
           echo "Waiting for service to be ready..."
           sleep 60
 
-          # Get the new ingress URL
+          # Get the new ingress URL from the provider
           INGRESS=$(provider-services lease-status \
             --dseq $DSEQ \
             --provider $PREFERRED_PROVIDER \
@@ -278,13 +315,25 @@ jobs:
             --home $AKASH_HOME 2>/dev/null | jq -r '.services["auth-api"].uris[0]' || echo "")
 
           if [ -n "$INGRESS" ]; then
-            echo "New ingress: $INGRESS"
+            echo "New ingress URL: $INGRESS"
             echo "INGRESS=$INGRESS" >> $GITHUB_ENV
-
-            # Update Caddy route via Admin API
-            # Note: This requires Caddy admin API to be accessible
-            echo "TODO: Update Caddy route to point to $INGRESS"
           fi
+
+      - name: Update SSL Proxy Backend
+        if: env.INGRESS != ''
+        run: |
+          echo "=== IMPORTANT: Update Caddy SSL Proxy ==="
+          echo ""
+          echo "The auth service backend is now available at:"
+          echo "  $INGRESS"
+          echo ""
+          echo "To update the SSL proxy (Fly.io), run:"
+          echo "  flyctl secrets set AUTH_BACKEND=$INGRESS -a alternatefutures-proxy"
+          echo ""
+          echo "Or trigger the deploy-caddy-proxy workflow with updated secrets."
+          echo ""
+          echo "The custom domain auth.alternatefutures.ai DNS should point to"
+          echo "the Fly.io proxy, NOT directly to Akash."
 
       - name: Deployment Summary
         run: |
@@ -292,9 +341,18 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**DSEQ**: \`$DSEQ\`" >> $GITHUB_STEP_SUMMARY
           echo "**Provider**: \`$PREFERRED_PROVIDER\`" >> $GITHUB_STEP_SUMMARY
-          echo "**URL**: https://auth.alternatefutures.ai" >> $GITHUB_STEP_SUMMARY
           if [ -n "$INGRESS" ]; then
-            echo "**Ingress**: \`$INGRESS\`" >> $GITHUB_STEP_SUMMARY
+            echo "**Backend Ingress**: \`$INGRESS\`" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "⚠️ **Note**: Remember to close old deployments and update the DSEQ in this workflow" >> $GITHUB_STEP_SUMMARY
+          echo "### SSL Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The custom domain \`auth.alternatefutures.ai\` uses the Caddy SSL proxy" >> $GITHUB_STEP_SUMMARY
+          echo "deployed on Fly.io for automatic Let's Encrypt certificates." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Next Steps:**" >> $GITHUB_STEP_SUMMARY
+          echo "1. Update Fly.io proxy backend: \`flyctl secrets set AUTH_BACKEND=$INGRESS -a alternatefutures-proxy\`" >> $GITHUB_STEP_SUMMARY
+          echo "2. Ensure DNS for \`auth.alternatefutures.ai\` points to Fly.io proxy" >> $GITHUB_STEP_SUMMARY
+          echo "3. Close old Akash deployments to save AKT" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **Note**: Update DEPLOYMENTS.md in the .github repo with new DSEQ" >> $GITHUB_STEP_SUMMARY
