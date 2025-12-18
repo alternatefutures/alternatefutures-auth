@@ -72,11 +72,32 @@ This document lists all environment variables required for `service-auth`.
 | `CORS_ORIGINS` | Allowed CORS origins | `https://app.alternatefutures.ai` |
 | `API_URL` | Backend API URL | `https://api.alternatefutures.ai` |
 
-## Database
+## Database (PostgreSQL)
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `DATABASE_URL` | SQLite database path | `file:./data/auth.db` |
+| `DATABASE_URL` | PostgreSQL connection string (shared with service-cloud-api) | `postgresql://postgres:PASSWORD@host:5432/alternatefutures` |
+
+**Note:** service-auth now uses the same PostgreSQL database as service-cloud-api. Auth tables are prefixed with `auth_` to avoid conflicts.
+
+### 1Password Storage
+
+The PostgreSQL admin credentials should be stored in 1Password:
+
+| Item Name | Field | Description |
+|-----------|-------|-------------|
+| `AlternateFutures PostgreSQL` | `password` | Admin password for postgres user |
+| `AlternateFutures PostgreSQL` | `host` | Database host (Akash provider URL) |
+| `AlternateFutures PostgreSQL` | `connection_string` | Full DATABASE_URL |
+
+### Infisical Configuration
+
+In Infisical, the DATABASE_URL should be set in:
+- **Path:** `/production/service-auth/DATABASE_URL`
+- **Value:** `postgresql://postgres:PASSWORD@AKASH_HOST:5432/alternatefutures`
+
+The same DATABASE_URL (or equivalent) should exist in:
+- **Path:** `/production/service-cloud-api/DATABASE_URL`
 
 ## Example .env
 

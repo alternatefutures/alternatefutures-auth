@@ -37,23 +37,19 @@ app.post('/challenge', strictRateLimit, async (c) => {
       expirationTime,
     });
 
-    // Store challenge in database
+    // Store challenge in database using Prisma
     const challengeId = nanoid();
     const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
 
-    await dbService.db.prepare(`
-      INSERT INTO siwe_challenges (id, address, message, nonce, expires_at, verified, created_at, ip_address)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      challengeId,
-      address.toLowerCase(),
+    await dbService.createSIWEChallenge({
+      id: challengeId,
+      address: address.toLowerCase(),
       message,
       nonce,
-      expiresAt,
-      0,
-      Date.now(),
-      c.req.header('x-forwarded-for') || c.req.header('x-real-ip')
-    );
+      expires_at: expiresAt,
+      verified: 0,
+      ip_address: c.req.header('x-forwarded-for') || c.req.header('x-real-ip'),
+    });
 
     return c.json({
       success: true,
@@ -90,12 +86,10 @@ app.post('/verify', strictRateLimit, async (c) => {
     const nonce = nonceMatch[1];
 
     // Get challenge from database
-    const challenge = await dbService.db.prepare(`
-      SELECT * FROM siwe_challenges
-      WHERE address = ? AND nonce = ? AND verified = 0
-      ORDER BY created_at DESC
-      LIMIT 1
-    `).get(address.toLowerCase(), nonce) as any;
+    const challenge = await dbService.getSIWEChallengeByAddressAndNonce(
+      address.toLowerCase(),
+      nonce
+    );
 
     if (!challenge) {
       return c.json({ error: 'Challenge not found or already used' }, 404);
@@ -114,11 +108,7 @@ app.post('/verify', strictRateLimit, async (c) => {
     }
 
     // Mark challenge as verified
-    await dbService.db.prepare(`
-      UPDATE siwe_challenges
-      SET verified = 1, verified_at = ?
-      WHERE id = ?
-    `).run(Date.now(), challenge.id);
+    await dbService.verifySIWEChallenge(challenge.id);
 
     // Check if user exists with this wallet
     let authMethod = await dbService.getAuthMethodByIdentifier(address.toLowerCase(), 'wallet');
@@ -138,11 +128,7 @@ app.post('/verify', strictRateLimit, async (c) => {
       });
 
       // Update auth method last used
-      await dbService.db.prepare(`
-        UPDATE auth_methods
-        SET last_used_at = ?
-        WHERE id = ?
-      `).run(Date.now(), authMethod.id);
+      await dbService.updateAuthMethodLastUsed(authMethod.id);
     } else {
       // Create new user
       user = await dbService.createUser({

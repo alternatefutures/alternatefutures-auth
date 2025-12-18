@@ -122,9 +122,7 @@ app.delete('/', standardRateLimit, async (c) => {
     const authUser = requireAuthUser(c);
 
     // Delete user (cascade will delete auth methods and sessions)
-    await dbService.db.prepare(`
-      DELETE FROM users WHERE id = ?
-    `).run(authUser.userId);
+    await dbService.deleteUser(authUser.userId);
 
     return c.json({
       success: true,

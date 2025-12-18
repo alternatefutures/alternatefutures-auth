@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'src/**'
+      - 'prisma/**'
       - 'Dockerfile'
       - 'package.json'
       - '.github/workflows/docker-build.yml'

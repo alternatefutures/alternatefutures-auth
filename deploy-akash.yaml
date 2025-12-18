@@ -1,6 +1,10 @@
 ---
 # Akash SDL Template - DO NOT commit actual secrets here
 # Use deploy script or GitHub Actions to inject secrets at deploy time
+#
+# MIGRATION NOTE: This service now uses PostgreSQL instead of SQLite.
+# Database connection is via the shared PostgreSQL deployment (service-cloud-api's postgres).
+# The DATABASE_URL is fetched from Infisical at runtime.
 version: "2.0"
 
 services:
@@ -10,10 +14,6 @@ services:
       host: ghcr.io
       username: alternatefutures
       password: ${GHCR_PAT}  # Injected at deploy time
-    params:
-      storage:
-        data:
-          mount: /app/data
     expose:
       - port: 3000
         as: 80
@@ -25,7 +25,8 @@ services:
       # Core Configuration
       - NODE_ENV=production
       - PORT=3000
-      - DATABASE_URL=/app/data/auth.db
+      # DATABASE_URL is now fetched from Infisical at runtime (PostgreSQL connection string)
+      # Format: postgresql://user:password@host:5432/database
 
       # JWT Token Expiry (non-sensitive)
       - JWT_EXPIRES_IN=15m
@@ -60,11 +61,6 @@ profiles:
           size: 1Gi
         storage:
           - size: 1Gi
-          - name: data
-            size: 2Gi
-            attributes:
-              persistent: true
-              class: beta3
 
   placement:
     akash:

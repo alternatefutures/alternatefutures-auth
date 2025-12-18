@@ -3,12 +3,32 @@ import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { corsMiddleware, devCorsMiddleware } from './middleware/cors';
 import { secretsService } from './services/secrets.service';
+import { initializePaymentProviders } from './services/payments';
 import authRoutes from './routes/auth';
 import accountRoutes from './routes/account';
 import tokensRoutes from './routes/tokens';
+import billingRoutes from './routes/billing';
 
 // Initialize secrets before anything else
 await secretsService.initialize();
+
+// Initialize payment providers
+initializePaymentProviders({
+  stripe: process.env.STRIPE_SECRET_KEY ? {
+    secretKey: process.env.STRIPE_SECRET_KEY,
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+  } : undefined,
+  stax: process.env.STAX_API_KEY ? {
+    apiKey: process.env.STAX_API_KEY,
+    merchantId: process.env.STAX_MERCHANT_ID || '',
+    webhookSecret: process.env.STAX_WEBHOOK_SECRET || '',
+    sandbox: process.env.STAX_SANDBOX === 'true',
+  } : undefined,
+  relay: process.env.RELAY_API_KEY ? {
+    apiKey: process.env.RELAY_API_KEY,
+    webhookSecret: process.env.RELAY_WEBHOOK_SECRET || '',
+  } : undefined,
+});
 
 const app = new Hono();
 
@@ -69,6 +89,59 @@ app.get('/', (c) => {
         validate: 'POST /tokens/validate',
         limits: 'GET /tokens/limits',
       },
+      billing: {
+        customer: {
+          get: 'GET /billing/customer',
+          update: 'POST /billing/customer',
+        },
+        paymentMethods: {
+          list: 'GET /billing/payment-methods',
+          addCard: 'POST /billing/payment-methods/card',
+          addCrypto: 'POST /billing/payment-methods/crypto',
+          setDefault: 'PUT /billing/payment-methods/:id/default',
+          delete: 'DELETE /billing/payment-methods/:id',
+        },
+        subscriptions: {
+          list: 'GET /billing/subscriptions',
+          active: 'GET /billing/subscriptions/active',
+          plans: 'GET /billing/subscriptions/plans',
+          create: 'POST /billing/subscriptions',
+          cancel: 'POST /billing/subscriptions/:id/cancel',
+          updateSeats: 'PUT /billing/subscriptions/:id/seats',
+        },
+        invoices: {
+          list: 'GET /billing/invoices',
+          get: 'GET /billing/invoices/:id',
+          generate: 'POST /billing/invoices/generate',
+        },
+        usage: {
+          current: 'GET /billing/usage/current',
+          history: 'GET /billing/usage/history',
+          record: 'POST /billing/usage/record',
+        },
+        payments: {
+          list: 'GET /billing/payments',
+          process: 'POST /billing/payments',
+          createCrypto: 'POST /billing/payments/crypto/create',
+          recordCrypto: 'POST /billing/payments/crypto/record',
+        },
+        connect: {
+          listAccounts: 'GET /billing/connect/accounts',
+          createAccount: 'POST /billing/connect/accounts',
+          getAccount: 'GET /billing/connect/accounts/:id',
+          onboardingLink: 'POST /billing/connect/accounts/:id/onboarding-link',
+          dashboardLink: 'POST /billing/connect/accounts/:id/dashboard-link',
+          deleteAccount: 'DELETE /billing/connect/accounts/:id',
+          listTransfers: 'GET /billing/connect/transfers',
+          createTransfer: 'POST /billing/connect/transfers',
+          platformBalance: 'GET /billing/connect/balance',
+        },
+        webhooks: {
+          stripe: 'POST /billing/webhooks/stripe',
+          stax: 'POST /billing/webhooks/stax',
+          relay: 'POST /billing/webhooks/relay',
+        },
+      },
     },
   });
 });
@@ -81,6 +154,9 @@ app.route('/account', accountRoutes);
 
 // Mount tokens routes
 app.route('/tokens', tokensRoutes);
+
+// Mount billing routes
+app.route('/billing', billingRoutes);
 
 // 404 handler
 app.notFound((c) => {

@@ -47,11 +47,9 @@ app.delete('/:id', standardRateLimit, async (c) => {
     const methodId = c.req.param('id');
 
     // Get the auth method
-    const method = await dbService.db.prepare(`
-      SELECT * FROM auth_methods WHERE id = ? AND user_id = ?
-    `).get(methodId, user.userId) as any;
+    const method = await dbService.getAuthMethodById(methodId);
 
-    if (!method) {
+    if (!method || method.user_id !== user.userId) {
       return c.json({ error: 'Auth method not found' }, 404);
     }
 
@@ -65,9 +63,7 @@ app.delete('/:id', standardRateLimit, async (c) => {
     }
 
     // Delete the auth method
-    await dbService.db.prepare(`
-      DELETE FROM auth_methods WHERE id = ?
-    `).run(methodId);
+    await dbService.deleteAuthMethod(methodId);
 
     return c.json({
       success: true,
@@ -89,23 +85,17 @@ app.post('/:id/set-primary', standardRateLimit, async (c) => {
     const methodId = c.req.param('id');
 
     // Verify the method belongs to the user
-    const method = await dbService.db.prepare(`
-      SELECT * FROM auth_methods WHERE id = ? AND user_id = ?
-    `).get(methodId, user.userId) as any;
+    const method = await dbService.getAuthMethodById(methodId);
 
-    if (!method) {
+    if (!method || method.user_id !== user.userId) {
       return c.json({ error: 'Auth method not found' }, 404);
     }
 
     // Unset all other primary methods
-    await dbService.db.prepare(`
-      UPDATE auth_methods SET is_primary = 0 WHERE user_id = ?
-    `).run(user.userId);
+    await dbService.unsetAllPrimaryAuthMethods(user.userId);
 
     // Set this method as primary
-    await dbService.db.prepare(`
-      UPDATE auth_methods SET is_primary = 1 WHERE id = ?
-    `).run(methodId);
+    await dbService.updateAuthMethod(methodId, { is_primary: 1 });
 
     return c.json({
       success: true,

@@ -8,13 +8,19 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "start": "node dist/index.js",
-    "db:setup": "tsx scripts/setup-db.ts",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "db:seed": "tsx scripts/seed-plans.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint . --ext .ts",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "postinstall": "prisma generate"
   },
   "keywords": [
     "authentication",
@@ -34,7 +40,7 @@
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1",
     "@noble/secp256k1": "^3.0.0",
-    "better-sqlite3": "^12.4.1",
+    "@prisma/client": "^6.1.0",
     "dotenv": "^17.2.3",
     "ethers": "^6.13.0",
     "hono": "^4.10.5",
@@ -45,11 +51,11 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.13",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^24.10.1",
     "eslint": "^9.0.0",
     "prettier": "^3.4.2",
+    "prisma": "^6.1.0",
     "tsx": "^4.7.1",
     "typescript": "^5.4.3",
     "vitest": "^4.0.8",

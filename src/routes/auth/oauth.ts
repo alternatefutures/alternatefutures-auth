@@ -119,11 +119,10 @@ app.get('/callback/:provider', async (c) => {
       });
 
       // Update auth method with new token
-      await dbService.db.prepare(`
-        UPDATE auth_methods
-        SET oauth_access_token = ?, last_used_at = ?
-        WHERE id = ?
-      `).run(accessToken, Date.now(), authMethod.id);
+      await dbService.updateAuthMethod(authMethod.id, {
+        oauth_access_token: accessToken,
+        last_used_at: Date.now(),
+      });
     } else {
       // Create new user
       user = await dbService.createUser({
