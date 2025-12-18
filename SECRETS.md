@@ -76,9 +76,23 @@ This document lists all environment variables required for `service-auth`.
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string (shared with service-cloud-api) | `postgresql://postgres:PASSWORD@host:5432/alternatefutures` |
+| `DATABASE_URL` | PostgreSQL connection string (auth-dedicated database) | `postgresql://auth:PASSWORD@host:31568/auth` |
 
-**Note:** service-auth now uses the same PostgreSQL database as service-cloud-api. Auth tables are prefixed with `auth_` to avoid conflicts.
+**Note:** service-auth has its own dedicated PostgreSQL database, separate from service-cloud-api.
+This supports clean isolation for multi-tenant deployments and independent backup/restore.
+
+### Akash Deployment
+
+| Field | Value |
+|-------|-------|
+| **DSEQ** | `24677103` |
+| **Provider** | `akash18ga02jzaq8cw52anyhzkwta5wygufgu6zsz6xc` (europlots) |
+| **Host** | `provider.europlots.com` |
+| **Port** | `31568` |
+| **Database** | `auth` |
+| **User** | `auth` |
+| **Resources** | 0.5 CPU, 512Mi RAM, 5Gi persistent storage |
+| **SDL** | `infra/postgres-standalone.yaml` |
 
 ### 1Password Storage
 
@@ -87,22 +101,20 @@ The PostgreSQL admin credentials should be stored in 1Password:
 | Item Name | Field | Description |
 |-----------|-------|-------------|
 | `Alternate Auth PostgreSQL` | `password` | Admin password for postgres user |
-| `Alternate Auth PostgreSQL` | `host` | Database host (Akash provider URL) |
+| `Alternate Auth PostgreSQL` | `host` | Database host (`provider.europlots.com`) |
+| `Alternate Auth PostgreSQL` | `port` | Database port (`31568`) |
 | `Alternate Auth PostgreSQL` | `connection_string` | Full DATABASE_URL |
-| `Alternate Auth PostgreSQL` | `dseq` | Akash deployment sequence number (24520638) |
+| `Alternate Auth PostgreSQL` | `dseq` | Akash deployment sequence number (`24677103`) |
 | `Alternate Auth PostgreSQL` | `provider` | Akash provider address |
 
-**Note:** This is the shared platform database used by both `service-cloud-api` and `service-auth`.
-Do NOT confuse with Infisical's internal PostgreSQL database.
+**Note:** This is a dedicated database for service-auth only.
+Do NOT confuse with `Alternate Cloud PostgreSQL` (service-cloud-api) or Infisical's internal PostgreSQL.
 
 ### Infisical Configuration
 
 In Infisical, the DATABASE_URL should be set in:
-- **Path:** `/production/service-auth/DATABASE_URL`
-- **Value:** `postgresql://postgres:PASSWORD@AKASH_HOST:5432/alternatefutures`
-
-The same DATABASE_URL (or equivalent) should exist in:
-- **Path:** `/production/service-cloud-api/DATABASE_URL`
+- **Path:** `/service-auth/DATABASE_URL`
+- **Value:** `postgresql://auth:PASSWORD@provider.europlots.com:31568/auth`
 
 ## Example .env
 

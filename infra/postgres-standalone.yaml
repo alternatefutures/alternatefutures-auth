@@ -1,0 +1,65 @@
+---
+# Auth Service PostgreSQL Database
+# Dedicated database for service-auth (multi-tenant auth product)
+#
+# DSEQ: 24677103
+# Provider: akash18ga02jzaq8cw52anyhzkwta5wygufgu6zsz6xc (europlots)
+# Connection: provider.europlots.com:31568
+#
+# After deployment, add connection details to:
+#   1Password: "Alternate Auth PostgreSQL"
+#   Infisical: /service-auth/DATABASE_URL
+#
+version: '2.0'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    expose:
+      - port: 5432
+        as: 5432
+        to:
+          - global: true
+    params:
+      storage:
+        data:
+          mount: /var/lib/postgresql/data
+    env:
+      - POSTGRES_USER=auth
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=auth
+      - PGDATA=/var/lib/postgresql/data/pgdata
+
+profiles:
+  compute:
+    postgres:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 512Mi
+        storage:
+          - size: 1Gi
+          - name: data
+            size: 5Gi
+            attributes:
+              persistent: true
+              class: beta3
+
+  placement:
+    akash:
+      attributes:
+        host: akash
+      signedBy:
+        anyOf:
+          - 'akash1365yvmc4s7awdyj3n2sav7xfx76adc6dnmlx63'
+      pricing:
+        postgres:
+          denom: uakt
+          amount: 1000
+
+deployment:
+  postgres:
+    akash:
+      profile: postgres
+      count: 1
