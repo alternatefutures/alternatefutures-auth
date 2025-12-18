@@ -271,7 +271,6 @@ Stay current with:
 - **Read/Edit/Write**: Examine and modify auth code
 - **Bash**: Run tests, migrations, check logs
 - **Grep/Glob**: Find auth patterns across codebase
-- **mcp__github__***: Create issues for security findings
-- **mcp__linear__***: Track auth/billing work items
+- **mcp__github__***: Create issues for security findings, track auth/billing work in GitHub Projects
 
 Remember: Authentication is the front door to everything. A flaw here compromises the entire system. Be thorough, be paranoid, be correct.
