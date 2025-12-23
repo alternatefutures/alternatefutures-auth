@@ -280,18 +280,18 @@ jobs:
 
           echo ""
           echo "All bids received:"
-          # Handle both snake_case (bid_id) and camelCase (bidId) formats
-          cat /tmp/bids.json | jq '.bids[] | {provider: (.bid.bid_id.provider // .bid.bidId.provider // .bidId.provider), price: (.bid.price.amount // .price.amount)}'
+          # Handle different JSON structures: .bid.id.provider (actual) vs .bid.bid_id.provider (legacy)
+          cat /tmp/bids.json | jq '.bids[] | {provider: (.bid.id.provider // .bid.bid_id.provider // .bidId.provider), price: (.bid.price.amount // .price.amount)}'
 
           # Filter out blocked provider (SSL proxy's provider - NAT hairpin issue)
           echo ""
           echo "Filtering out blocked provider: $BLOCKED_PROVIDER"
           echo "Reason: SSL proxy is on this provider - NAT hairpin prevents connectivity"
 
-          # Extract providers with fallback for different JSON structures
+          # Extract providers - actual path is .bid.id.provider
           SAFE_PROVIDERS=$(cat /tmp/bids.json | jq -r --arg blocked "$BLOCKED_PROVIDER" '
             .bids[] |
-            ((.bid.bid_id.provider // .bid.bidId.provider // .bidId.provider) | select(. != null)) as $provider |
+            ((.bid.id.provider // .bid.bid_id.provider // .bidId.provider) | select(. != null)) as $provider |
             select($provider != $blocked) |
             $provider
           ')
@@ -304,7 +304,7 @@ jobs:
             echo "Either wait for more bids or move the SSL proxy to a different provider."
             echo ""
             echo "Debug: Checking if any providers exist at all..."
-            cat /tmp/bids.json | jq -r '.bids[] | (.bid.bid_id.provider // .bid.bidId.provider // .bidId.provider // "NO_PROVIDER_FOUND")'
+            cat /tmp/bids.json | jq -r '.bids[] | (.bid.id.provider // .bid.bid_id.provider // .bidId.provider // "NO_PROVIDER_FOUND")'
             exit 1
           fi
 
