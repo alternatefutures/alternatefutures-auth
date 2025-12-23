@@ -65,9 +65,11 @@ class SecretsService {
     }
 
     try {
-      console.log('🔐 Connecting to Infisical...');
+      const siteUrl = process.env.INFISICAL_SITE_URL;
+      console.log('🔐 Connecting to Infisical...', siteUrl ? `(${siteUrl})` : '(cloud)');
 
       this.client = new InfisicalClient({
+        siteUrl: siteUrl || undefined, // Use self-hosted URL if provided
         auth: {
           universalAuth: {
             clientId,
