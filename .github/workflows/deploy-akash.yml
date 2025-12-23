@@ -37,9 +37,12 @@ env:
   AKASH_GAS_PRICES: 0.025uakt
   AKASH_GAS_ADJUSTMENT: "1.5"
   # Provider selection
-  # Note: All Akash providers use wildcard certs for their domains.
-  # Custom domain SSL must be handled externally (Caddy proxy on Fly.io).
-  PREFERRED_PROVIDER: "akash1r2yz5fzkk9gt0r3mk9u2c29q5mmtef050cryak"
+  # IMPORTANT: Do NOT deploy on the same provider as the SSL proxy to avoid NAT hairpin issues.
+  # The proxy cannot reach services on its own provider's public ingress.
+  # Current proxy provider (blocked): akash18ga02jzaq8cw52anyhzkwta5wygufgu6zsz6xc (Europlots)
+  # See: admin/infrastructure/deployments.ts for current proxy provider
+  BLOCKED_PROVIDER: "akash18ga02jzaq8cw52anyhzkwta5wygufgu6zsz6xc"
+  PREFERRED_PROVIDER: ""  # Will be selected from bids, excluding blocked provider
 
 jobs:
   validate:
@@ -260,25 +263,51 @@ jobs:
           echo "New DSEQ: $DSEQ"
           echo "DSEQ=$DSEQ" >> $GITHUB_ENV
 
-      - name: Wait for Bids
+      - name: Wait for Bids and Select Provider
         run: |
           echo "Waiting for bids on DSEQ: $DSEQ"
           sleep 30
 
-          # List bids
+          # List all bids
           akash query market bid list \
             --owner $AKASH_FROM \
             --dseq $DSEQ \
-            --output json | jq '.bids'
+            --output json > /tmp/bids.json
 
-      - name: Accept Bid from Preferred Provider
+          echo "All bids received:"
+          cat /tmp/bids.json | jq '.bids[] | {provider: .bid.bid_id.provider, price: .bid.price.amount}'
+
+          # Filter out blocked provider (SSL proxy's provider - NAT hairpin issue)
+          echo ""
+          echo "Filtering out blocked provider: $BLOCKED_PROVIDER"
+          echo "Reason: SSL proxy is on this provider - NAT hairpin prevents connectivity"
+
+          SAFE_PROVIDERS=$(cat /tmp/bids.json | jq -r --arg blocked "$BLOCKED_PROVIDER" '
+            .bids[] |
+            select(.bid.bid_id.provider != $blocked) |
+            .bid.bid_id.provider
+          ')
+
+          if [ -z "$SAFE_PROVIDERS" ]; then
+            echo "::error::No safe providers available! All bids are from the blocked provider."
+            echo "Either wait for more bids or move the SSL proxy to a different provider."
+            exit 1
+          fi
+
+          # Select the first safe provider (could enhance to select cheapest)
+          SELECTED_PROVIDER=$(echo "$SAFE_PROVIDERS" | head -n1)
+          echo "Selected safe provider: $SELECTED_PROVIDER"
+          echo "SELECTED_PROVIDER=$SELECTED_PROVIDER" >> $GITHUB_ENV
+
+      - name: Accept Bid from Safe Provider
         run: |
-          echo "Accepting bid from provider: $PREFERRED_PROVIDER"
+          echo "Accepting bid from provider: $SELECTED_PROVIDER"
+          echo "(Blocked provider $BLOCKED_PROVIDER was excluded to avoid NAT hairpin)"
 
-          # Create lease with preferred provider
+          # Create lease with selected safe provider
           akash tx market lease create \
             --dseq $DSEQ \
-            --provider $PREFERRED_PROVIDER \
+            --provider $SELECTED_PROVIDER \
             --from deployer \
             --keyring-backend=test \
             --home $AKASH_HOME \
@@ -288,15 +317,15 @@ jobs:
             --gas-adjustment $AKASH_GAS_ADJUSTMENT
 
           sleep 10
-          echo "Lease created"
+          echo "Lease created with provider: $SELECTED_PROVIDER"
 
       - name: Send Manifest
         run: |
-          echo "Sending manifest to provider..."
+          echo "Sending manifest to provider: $SELECTED_PROVIDER"
 
           provider-services send-manifest /tmp/deploy.yaml \
             --dseq $DSEQ \
-            --provider $PREFERRED_PROVIDER \
+            --provider $SELECTED_PROVIDER \
             --from deployer \
             --keyring-backend=test \
             --home $AKASH_HOME
@@ -311,7 +340,7 @@ jobs:
           # Get the new ingress URL from the provider
           INGRESS=$(provider-services lease-status \
             --dseq $DSEQ \
-            --provider $PREFERRED_PROVIDER \
+            --provider $SELECTED_PROVIDER \
             --from deployer \
             --keyring-backend=test \
             --home $AKASH_HOME 2>/dev/null | jq -r '.services["auth-api"].uris[0]' || echo "")
@@ -342,7 +371,8 @@ jobs:
           echo "## Akash Deployment Created" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**DSEQ**: \`$DSEQ\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Provider**: \`$PREFERRED_PROVIDER\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Provider**: \`$SELECTED_PROVIDER\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Blocked Provider**: \`$BLOCKED_PROVIDER\` (SSL proxy - NAT hairpin)" >> $GITHUB_STEP_SUMMARY
           if [ -n "$INGRESS" ]; then
             echo "**Backend Ingress**: \`$INGRESS\`" >> $GITHUB_STEP_SUMMARY
           fi
