@@ -166,7 +166,8 @@ jobs:
                 - GITHUB_REDIRECT_URI=https://auth.alternatefutures.ai/auth/oauth/callback/github
                 - TWITTER_REDIRECT_URI=https://auth.alternatefutures.ai/auth/oauth/callback/twitter
                 - DISCORD_REDIRECT_URI=https://auth.alternatefutures.ai/auth/oauth/callback/discord
-                - INFISICAL_SITE_URL=https://secrets.alternatefutures.ai
+                # Use direct Infisical ingress to avoid NAT hairpin through proxy
+                - INFISICAL_SITE_URL=https://ddchr1pel5e0p8i0c46drjpclg.ingress.europlots.com
                 - INFISICAL_CLIENT_ID=${{ secrets.INFISICAL_CLIENT_ID }}
                 - INFISICAL_CLIENT_SECRET=${{ secrets.INFISICAL_CLIENT_SECRET }}
                 - INFISICAL_PROJECT_ID=${{ secrets.INFISICAL_PROJECT_ID }}
