@@ -274,23 +274,37 @@ jobs:
             --dseq $DSEQ \
             --output json > /tmp/bids.json
 
+          # Debug: show raw JSON structure
+          echo "Raw bids structure (first bid):"
+          cat /tmp/bids.json | jq '.bids[0]' 2>/dev/null || echo "No bids found"
+
+          echo ""
           echo "All bids received:"
-          cat /tmp/bids.json | jq '.bids[] | {provider: .bid.bid_id.provider, price: .bid.price.amount}'
+          # Handle both snake_case (bid_id) and camelCase (bidId) formats
+          cat /tmp/bids.json | jq '.bids[] | {provider: (.bid.bid_id.provider // .bid.bidId.provider // .bidId.provider), price: (.bid.price.amount // .price.amount)}'
 
           # Filter out blocked provider (SSL proxy's provider - NAT hairpin issue)
           echo ""
           echo "Filtering out blocked provider: $BLOCKED_PROVIDER"
           echo "Reason: SSL proxy is on this provider - NAT hairpin prevents connectivity"
 
+          # Extract providers with fallback for different JSON structures
           SAFE_PROVIDERS=$(cat /tmp/bids.json | jq -r --arg blocked "$BLOCKED_PROVIDER" '
             .bids[] |
-            select(.bid.bid_id.provider != $blocked) |
-            .bid.bid_id.provider
+            ((.bid.bid_id.provider // .bid.bidId.provider // .bidId.provider) | select(. != null)) as $provider |
+            select($provider != $blocked) |
+            $provider
           ')
+
+          echo "Safe providers found:"
+          echo "$SAFE_PROVIDERS"
 
           if [ -z "$SAFE_PROVIDERS" ]; then
             echo "::error::No safe providers available! All bids are from the blocked provider."
             echo "Either wait for more bids or move the SSL proxy to a different provider."
+            echo ""
+            echo "Debug: Checking if any providers exist at all..."
+            cat /tmp/bids.json | jq -r '.bids[] | (.bid.bid_id.provider // .bid.bidId.provider // .bidId.provider // "NO_PROVIDER_FOUND")'
             exit 1
           fi
 
